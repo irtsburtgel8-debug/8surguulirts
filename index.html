@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Ухаалаг сургууль — Ирц бүртгэлийн систем</title>
+<!-- Firebase Realtime Database SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
   :root {
     --pri: #6366f1;
@@ -73,6 +76,14 @@
     font-weight: 800;
     letter-spacing: -0.3px;
   }
+  .badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
   .badge {
     background: rgba(255, 255, 255, 0.18);
     backdrop-filter: blur(8px);
@@ -83,7 +94,17 @@
     font-size: 11px;
     font-weight: 600;
     display: inline-block;
-    margin-top: 10px;
+  }
+  .cloud-pill {
+    background: rgba(16, 185, 129, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
   }
   .btn-out {
     background: rgba(255, 255, 255, 0.18);
@@ -424,6 +445,14 @@
     text-align: left;
     font-weight: 700;
   }
+  .copyright-footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--mut);
+    margin-top: 20px;
+    font-weight: 600;
+    padding-bottom: 10px;
+  }
 </style>
 </head>
 <body>
@@ -435,10 +464,17 @@
 
 <script>
 // =========================================================
-// 1. ОГНОО БА ЦАГИЙН ХЯЗГААРЛАЛТЫН ТООЦООЛОЛ
+// 1. FIREBASE CLOUD DATABASE БА ТОХИРГОО
 // =========================================================
-let memDB = null;
+const FB_URL = 'https://surguul-5405b-default-rtdb.firebaseio.com';
+const FB_REST_ENDPOINT = `${FB_URL}/smart_school_v1.json`;
 const KEY = 'smart_school_pro_time_locked_v2';
+
+let memDB = null;
+let cloudRef = null;
+let cloudStatus = '⏳ Холбогдож байна...';
+let isApplyingRemote = false;
+let saveTimer = null;
 
 function getTodayStr() {
   const d = new Date();
@@ -479,17 +515,158 @@ function defaultData() {
   };
 }
 
+function ensureStructure(data) {
+  if (!data || typeof data !== 'object') return defaultData();
+  if (!data.school) data.school = { name: '8-р сургууль', gmail: '8surmeneger@gmail.com' };
+  if (!Array.isArray(data.users) || data.users.length === 0) {
+    data.users = [{ u: '8surmeneger', p: '12345678', role: 'manager', cls: 'Бүгд', label: 'Сургуулийн Менежер' }];
+  }
+  if (!data.classes || typeof data.classes !== 'object') data.classes = {};
+  Object.keys(data.classes).forEach(k => {
+    const c = data.classes[k];
+    if (!c.shift) c.shift = 'Өглөө';
+    if (!c.schedule) c.schedule = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+    for (let d = 1; d <= 5; d++) {
+      if (!Array.isArray(c.schedule[d])) c.schedule[d] = [];
+    }
+    if (!Array.isArray(c.students)) c.students = [];
+    if (!c.records || typeof c.records !== 'object') c.records = {};
+  });
+  return data;
+}
+
 function loadDB() {
   try {
     const s = window.localStorage.getItem(KEY);
-    if (s) return JSON.parse(s);
+    if (s) return ensureStructure(JSON.parse(s));
   } catch(e) {}
   if (!memDB) memDB = defaultData();
   return memDB;
 }
-function saveDB() {
+
+function saveLocalOnly() {
   try { window.localStorage.setItem(KEY, JSON.stringify(db)); } catch(e) {}
   memDB = db;
+}
+
+function pushToCloud() {
+  if (isApplyingRemote) return;
+  const payloadObj = {
+    payload: JSON.stringify(db),
+    updatedAt: Date.now()
+  };
+
+  if (cloudRef) {
+    cloudRef.set(payloadObj).then(() => {
+      cloudStatus = '☁️ Онлайн';
+      updateCloudBadge();
+    }).catch(() => {
+      pushViaRest(payloadObj);
+    });
+  } else {
+    pushViaRest(payloadObj);
+  }
+}
+
+function pushViaRest(payloadObj) {
+  fetch(FB_REST_ENDPOINT, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payloadObj)
+  }).then(r => {
+    if (r.ok) {
+      cloudStatus = '☁️ Онлайн';
+      updateCloudBadge();
+    }
+  }).catch(() => {
+    cloudStatus = '⚠️ Офлайн';
+    updateCloudBadge();
+  });
+}
+
+function saveDB(debounce = false) {
+  saveLocalOnly();
+  if (debounce) {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => pushToCloud(), 450);
+  } else {
+    pushToCloud();
+  }
+}
+
+function applyIncomingCloudData(val) {
+  if (!val || !val.payload) {
+    pushToCloud();
+    cloudStatus = '☁️ Онлайн';
+    updateCloudBadge();
+    return;
+  }
+  try {
+    const parsed = ensureStructure(JSON.parse(val.payload));
+    isApplyingRemote = true;
+    db = parsed;
+    saveLocalOnly();
+    isApplyingRemote = false;
+    cloudStatus = '☁️ Онлайн';
+
+    const activeTag = document.activeElement ? document.activeElement.tagName : '';
+    if (activeTag !== 'INPUT' && activeTag !== 'TEXTAREA' && activeTag !== 'SELECT') {
+      render();
+    } else {
+      updateCloudBadge();
+    }
+  } catch (e) {}
+}
+
+function manualSyncCloud() {
+  cloudStatus = '🔄 Шинэчилж байна...';
+  updateCloudBadge();
+  fetch(FB_REST_ENDPOINT)
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.payload) {
+        applyIncomingCloudData(data);
+        notify('☁️ Мэдээлэл шинэчлэгдлээ!');
+      } else {
+        pushToCloud();
+        notify('☁️ Мэдээлэл үүлэн санах ойд хадгалагдлаа!');
+      }
+    })
+    .catch(() => {
+      cloudStatus = '⚠️ Офлайн';
+      updateCloudBadge();
+      notify('⚠️ Интернэт холболтоо шалгана уу!');
+    });
+}
+
+function initFirebaseCloud() {
+  fetch(FB_REST_ENDPOINT)
+    .then(r => r.json())
+    .then(data => {
+      applyIncomingCloudData(data);
+    })
+    .catch(() => {
+      cloudStatus = '⚠️ Офлайн';
+      updateCloudBadge();
+    });
+
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps.length) {
+        firebase.initializeApp({ databaseURL: FB_URL });
+      }
+      cloudRef = firebase.database().ref('smart_school_v1');
+      cloudRef.on('value', snapshot => {
+        const val = snapshot.val();
+        if (val) applyIncomingCloudData(val);
+      });
+    }
+  } catch (e) {}
+}
+
+function updateCloudBadge() {
+  const el = document.getElementById('cloud_ind');
+  if (el) el.innerText = cloudStatus + ' 🔄';
 }
 
 let db = loadDB();
@@ -536,7 +713,7 @@ function updateLeaveReason(idx, val) {
   const cls = db.classes[curUser.cls];
   const rec = getDayRecord(cls, curDate, idx);
   rec.leaveReason = val.substring(0, 40); 
-  saveDB();
+  saveDB(true);
 }
 
 function getStudentPersonalStats(clsObj, stIdx) {
@@ -589,7 +766,6 @@ function applyDateSearch(inputId) {
   const dow = d.getDay();
   if (dow >= 1 && dow <= 5) curDay = dow;
 
-  saveDB();
   notify(`📅 ${curDate} өдрийн мэдээлэл гарлаа!`);
   render();
 }
@@ -637,9 +813,15 @@ function render() {
         <h1>Ухаалаг сургууль</h1>
         <button class="btn-out" onclick="logout()">Гарах 🚪</button>
       </div>
-      <div class="badge">👤 ${curUser.label} (${curUser.u}) • Анги: ${curUser.cls}</div>
+      <div class="badge-row">
+        <div class="badge">👤 ${curUser.label} (${curUser.u}) • Анги: ${curUser.cls}</div>
+        <div id="cloud_ind" class="cloud-pill" onclick="manualSyncCloud()">${cloudStatus} 🔄</div>
+      </div>
     </div>
-    <div class="wrap">${body}</div>
+    <div class="wrap">
+      ${body}
+      <div class="copyright-footer">Copyright © 2026 У.Элбэг, Э.Батсайхан</div>
+    </div>
   `;
 }
 
@@ -649,8 +831,11 @@ function render() {
 function renderLogin() {
   return `
     <div class="hdr" style="padding:38px 22px;">
-      <h1>Ухаалаг сургууль</h1>
-      <div class="badge">Ирц бүртгэлийн систем</div>
+      <div class="hdr-top">
+        <h1>Ухаалаг сургууль</h1>
+        <div id="cloud_ind" class="cloud-pill" onclick="manualSyncCloud()">${cloudStatus} 🔄</div>
+      </div>
+      <div class="badge" style="margin-top:10px">Ирц бүртгэлийн систем</div>
     </div>
     <div class="wrap">
       <div class="card">
@@ -661,6 +846,7 @@ function renderLogin() {
         <input id="l_pass" type="password" placeholder="Нууц үгээ оруулна уу" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
         <button class="btn btn-p" onclick="doLogin()">🚀 Нэвтрэх</button>
       </div>
+      <div class="copyright-footer">Copyright © 2026 У.Элбэг, Э.Батсайхан</div>
     </div>
   `;
 }
@@ -832,11 +1018,10 @@ function renderArchiveSection() {
 
   const targetClasses = (curArchiveClass === 'Бүгд') ? clsList : [curArchiveClass];
 
-  // Анги сонгох хэсэг (Зөвхөн Менежер ба Нийгмийн ажилтанд харагдана)
   let selectorHtml = '';
   if (!isTeacher) {
     let optsHtml = `<option value="Бүгд" ${curArchiveClass==='Бүгд'?'selected':''}>🏫 Бүх анги нэгтгэж (${clsList.length} анги)</option>`;
-    optsHtml += clsList.map(c => `<option value="${c}" ${curArchiveClass===c?'selected':''}>📌 ${c} анги (${db.classes[c].students.length} сурагч)</option>`).join('');
+    optsHtml += clsList.map(c => `<option value="${c}" ${curArchiveClass===c?'selected':''}>📌 ${c} анги (${(db.classes[c].students||[]).length} сурагч)</option>`).join('');
 
     selectorHtml = `
       <div class="card">
@@ -848,14 +1033,13 @@ function renderArchiveSection() {
     `;
   }
 
-  // Сонгосон ангиудын нэгдсэн хүснэгт бэлдэх
   let classCardsHtml = targetClasses.map(cName => {
     const cObj = db.classes[cName];
     if (!cObj) return '';
     const recDates = Object.keys(cObj.records || {}).sort().reverse();
     let rowsHtml = '';
 
-    if (cObj.students.length === 0) {
+    if (!cObj.students || cObj.students.length === 0) {
       rowsHtml = `<p style="font-size:12px;color:var(--mut)">Сурагч бүртгэгдээгүй байна.</p>`;
     } else {
       let trs = cObj.students.map((st, idx) => {
@@ -900,7 +1084,7 @@ function renderArchiveSection() {
           <span style="font-size:11px;color:var(--mut)">Бүртгэсэн: ${recDates.length} өдөр</span>
         </div>
         <div style="font-size:11px;color:var(--mut);margin-bottom:8px">
-          Ээлж: <b>${cObj.shift || 'Өглөө'}</b> • Нийт сурагч: <b>${cObj.students.length}</b>
+          Ээлж: <b>${cObj.shift || 'Өглөө'}</b> • Нийт сурагч: <b>${(cObj.students||[]).length}</b>
         </div>
         ${rowsHtml}
       </div>
@@ -923,18 +1107,17 @@ function renderArchiveSection() {
   `;
 }
 
-// Excel (CSV) файл татах функц
 function downloadArchiveCSV(targetCls) {
   const isTeacher = (curUser.role === 'teacher');
   const clsList = (targetCls === 'Бүгд') ? Object.keys(db.classes) : [targetCls];
   if (clsList.length === 0) return notify('⚠️ Татах анги алга байна!');
 
-  let csv = '\uFEFF'; // Монгол үсэг Excel дээр таниулах UTF-8 BOM
+  let csv = '\uFEFF';
   csv += 'Сургууль,Анги,Ээлж,Д/Д,Сурагчийн нэр,Ирсэн өдөр,Тасалсан,Чөлөөтэй,Өвчтэй,Формгүй' + (isTeacher ? ',Д/Г дутуу' : '') + ',Дэлгэрэнгүй түүх\n';
 
   clsList.forEach(cName => {
     const cObj = db.classes[cName];
-    if (!cObj) return;
+    if (!cObj || !cObj.students) return;
     cObj.students.forEach((st, idx) => {
       const s = getStudentPersonalStats(cObj, idx);
       const histStr = s.history.map(h => `${h.date}: ${h.txt}`).join(' || ').replace(/"/g, '""');
@@ -959,14 +1142,13 @@ function downloadArchiveCSV(targetCls) {
   }
 }
 
-// Дэлгэрэнгүй архив харах болон хуулах цонх
 function openArchiveDetailModal(targetCls) {
   const clsList = (targetCls === 'Бүгд') ? Object.keys(db.classes) : [targetCls];
   let reportTxt = `=== ${db.school.name.toUpperCase()} - АРХИВ ТАЙЛАН (${getTodayStr()}) ===\n\n`;
 
   clsList.forEach(cName => {
     const cObj = db.classes[cName];
-    if (!cObj) return;
+    if (!cObj || !cObj.students) return;
     reportTxt += `🏫 АНГИ: ${cName} (${cObj.shift || 'Өглөө'} ээлж | Нийт ${cObj.students.length} сурагч)\n`;
     reportTxt += `--------------------------------------------------\n`;
     cObj.students.forEach((st, idx) => {
@@ -1048,7 +1230,7 @@ function renderSocialAnalytics() {
   }
 
   const clsObj = db.classes[curClassFilter];
-  const sts = clsObj.students;
+  const sts = clsObj.students || [];
   const total = sts.length || 1;
   const subjs = (clsObj.schedule && clsObj.schedule[curDay]) ? clsObj.schedule[curDay] : [];
 
@@ -1101,7 +1283,7 @@ function renderSocialAnalytics() {
   const maxB = Math.max(...barItems.map(x => x.val), 5);
 
   let tabsHtml = clsList.map(c => {
-    return `<button class="tab ${curClassFilter===c?'active':''}" onclick="curClassFilter='${c}';render()">${c} (${db.classes[c].students.length})</button>`;
+    return `<button class="tab ${curClassFilter===c?'active':''}" onclick="curClassFilter='${c}';render()">${c} (${(db.classes[c].students||[]).length})</button>`;
   }).join('');
 
   let barsHtml = barItems.map(b => {
@@ -1189,6 +1371,9 @@ function renderAlertGroup(title, list, color, clsObj, subjs = null) {
 // 7. АНГИЙН БАГШ БА АНГИЙН ДАРГА
 // =========================================================
 function renderTeacher() {
+  if (!db.classes[curUser.cls]) {
+    db.classes[curUser.cls] = { shift: 'Өглөө', schedule: { 1:[], 2:[], 3:[], 4:[], 5:[] }, students: [], records: {} };
+  }
   const cls = db.classes[curUser.cls];
   return `
     <div class="tabs">
@@ -1205,6 +1390,9 @@ function renderTeacher() {
 }
 
 function renderLeader() {
+  if (!db.classes[curUser.cls]) {
+    db.classes[curUser.cls] = { shift: 'Өглөө', schedule: { 1:[], 2:[], 3:[], 4:[], 5:[] }, students: [], records: {} };
+  }
   const cls = db.classes[curUser.cls];
   return `
     <div class="tabs">
@@ -1229,7 +1417,7 @@ function renderTeacherConfig(cls) {
 
   return `
     <div class="card">
-      <div class="title">👨‍🎓 ${curUser.cls} ангийн сурагч нэмэх (${cls.students.length})</div>
+      <div class="title">👨‍🎓 ${curUser.cls} ангийн сурагч нэмэх (${(cls.students||[]).length})</div>
       <textarea id="t_names" rows="3" placeholder="Сурагчдын нэрсийг шинэ мөрөөр эсвэл таслалаар зааглан бичнэ үү..."></textarea>
       <button class="btn btn-ok" onclick="addClassStudents()">➕ Сурагчид нэмэх</button>
     </div>
@@ -1270,6 +1458,7 @@ function addClassStudents() {
   if (!raw) return notify('⚠️ Сурагчдын нэрсийг оруулна уу!');
   const names = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
   const cls = db.classes[curUser.cls];
+  if (!Array.isArray(cls.students)) cls.students = [];
   names.forEach(n => cls.students.push({ name: n }));
   saveDB();
   notify(`✅ ${names.length} сурагч нэмэгдлээ!`);
@@ -1295,7 +1484,7 @@ function renderAttendanceBoard(cls) {
   const isLocked = parseDateStr(curDate) < parseDateStr(getTodayStr());
 
   let studentsHtml = '';
-  if (cls.students.length === 0) {
+  if (!cls.students || cls.students.length === 0) {
     studentsHtml = `
       <div class="card">
         <div class="title">👨‍🎓 Сурагчийн жагсаалт хоосон байна</div>
@@ -1365,7 +1554,7 @@ function renderAttendanceBoard(cls) {
       ${isLocked ? 
         `<div style="text-align:center; padding:14px; background:#fff1f2; color:#e11d48; border-radius:16px; font-size:12px; font-weight:800; margin-top:8px; border:1px solid #fecdd3;">🔒 Өнгөрсөн өдрийн мэдээллийг өөрчлөх боломжгүй (Зөвхөн харах).</div>` 
         : 
-        `<button class="btn btn-p" onclick="saveDB();notify('✅ ${curDate} өдрийн бүртгэл амжилттай хадгалагдлаа!')">💾 ${curDate} Бүртгэл хадгалах</button>`
+        `<button class="btn btn-p" onclick="saveDB();notify('✅ ${curDate} өдрийн бүртгэл үүлэн санах ойд хадгалагдлаа!')">💾 ${curDate} Бүртгэл хадгалах</button>`
       }
     `;
   }
@@ -1521,6 +1710,7 @@ function setHw(idx, sub, val) {
 }
 
 render();
+initFirebaseCloud();
 </script>
 </body>
 </html>
