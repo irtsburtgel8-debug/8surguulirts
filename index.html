@@ -1,0 +1,2390 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#6366f1">
+<title>Ухаалаг сургууль — 8-р сургууль</title>
+<!-- Firebase Realtime Database SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+  :root {
+    --pri: #6366f1;
+    --pri-light: #e0e7ff;
+    --pri-d: #4338ca;
+    --sec: #38bdf8;
+    --ok: #10b981;
+    --err: #f43f5e;
+    --warn: #f59e0b;
+    --purp: #a855f7;
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --txt: #1e293b;
+    --mut: #64748b;
+    --soft-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.06), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+    --card-border: 1px solid rgba(255, 255, 255, 0.9);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: #e2e8f0;
+    display: flex;
+    justify-content: center;
+    color: var(--txt);
+  }
+
+  #app {
+    width: 100%;
+    max-width: 520px;
+    min-height: 100vh;
+    background: var(--bg);
+    position: relative;
+    padding-bottom: 95px;
+    overflow-x: hidden;
+    box-shadow: 0 0 40px rgba(15, 23, 42, 0.1);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hdr {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
+    color: #fff;
+    padding: 24px 20px 34px;
+    border-radius: 0 0 32px 32px;
+    box-shadow: 0 12px 30px -8px rgba(99, 102, 241, 0.35);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+  .hdr-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .hdr h1 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+  .badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 6px 13px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-block;
+  }
+  .cloud-pill {
+    background: rgba(16, 185, 129, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+  }
+  .btn-out {
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #fff;
+    padding: 7px 14px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-out:active { transform: scale(0.94); }
+
+  .wrap {
+    padding: 16px;
+    margin-top: -20px;
+    position: relative;
+    z-index: 41;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    animation: fadeIn 0.25s ease-out;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 18px;
+    box-shadow: var(--soft-shadow);
+    border: var(--card-border);
+  }
+  .title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    letter-spacing: -0.2px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 13px 15px;
+    border-radius: 16px;
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 13px;
+    color: var(--txt);
+    margin-bottom: 10px;
+    outline: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: #818cf8;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-p {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.4);
+  }
+  .btn-ok {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.35);
+  }
+  .btn-err {
+    background: #ffe4e6;
+    color: #e11d48;
+  }
+  .btn-g {
+    background: #f1f5f9;
+    color: #475569;
+  }
+  .btn-sm {
+    width: auto;
+    padding: 7px 12px;
+    font-size: 11px;
+    border-radius: 12px;
+  }
+
+  /* Үндсэн цэсний табууд */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 5px;
+    background: #e2e8f0;
+    border-radius: 18px;
+  }
+  .tab {
+    flex: 1;
+    min-width: 70px;
+    text-align: center;
+    padding: 9px 10px;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--mut);
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+  .tab.active {
+    background: #ffffff;
+    color: var(--pri-d);
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+  }
+
+  /* Анги сонгох Button Grid (Notebook болон утсан дээр бүтэн харагдана) */
+  .class-btn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 8px;
+  }
+  .class-btn {
+    padding: 11px 8px;
+    border-radius: 14px;
+    border: 1.5px solid #cbd5e1;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.18s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+  .class-btn:hover {
+    border-color: #6366f1;
+    background: #eef2ff;
+  }
+  .class-btn:active {
+    transform: scale(0.95);
+  }
+  .class-btn.active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 6px 15px -3px rgba(99, 102, 241, 0.4);
+  }
+  .class-btn .sub-cnt {
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+
+  /* 1-7 цаг таслалт сонгох Button Grid */
+  .hour-btn-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .hour-btn {
+    padding: 12px 6px;
+    border-radius: 14px;
+    border: 1.5px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+  .hour-btn:active { transform: scale(0.95); }
+  .hour-btn.active-zero {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #34d399;
+  }
+  .hour-btn.active-abs {
+    background: linear-gradient(135deg, #f43f5e, #e11d48);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 5px 12px rgba(244, 63, 94, 0.35);
+  }
+
+  /* Самбар (Dashboard) жагсаалтын мөр */
+  .dash-box {
+    border-radius: 22px;
+    padding: 16px;
+    margin-bottom: 14px;
+    background: #ffffff;
+    box-shadow: var(--soft-shadow);
+    border: 1.5px solid #e2e8f0;
+  }
+  .dash-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #f8fafc;
+    margin-bottom: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    border-left: 4px solid var(--pri);
+  }
+  .dash-rank {
+    font-weight: 900;
+    padding: 4px 9px;
+    border-radius: 10px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .st-card {
+    background: #ffffff;
+    border-radius: 22px;
+    padding: 15px;
+    margin-bottom: 12px;
+    border: var(--card-border);
+    box-shadow: var(--soft-shadow);
+  }
+  .st-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .st-name-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 14px;
+    color: #0f172a;
+  }
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #e0e7ff, #ede9fe);
+    color: #4f46e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .st-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-mini {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: var(--mut);
+  }
+  .dots-btn {
+    background: #eef2ff;
+    border: 1.5px solid #c7d2fe;
+    color: #4338ca;
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    font-size: 17px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+  .dots-btn:active {
+    background: #e0e7ff;
+    transform: scale(0.92);
+  }
+
+  .chips { display: flex; gap: 8px; }
+  .chip {
+    flex: 1;
+    text-align: center;
+    padding: 9px 6px;
+    border-radius: 14px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    border: 1.5px solid transparent;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .chip:active { transform: scale(0.94); }
+  .c-pres { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+  .c-abs { background: #fff1f2; color: #e11d48; border-color: #fecdd3; }
+  .c-sick { background: #fffbeb; color: #d97706; border-color: #fde68a; }
+  .c-leav { background: #faf5ff; color: #7e22ce; border-color: #e9d5ff; }
+  .c-uni-y { background: #f0f9ff; color: #0284c7; border-color: #bae6fd; }
+  .c-uni-n { background: #fff1f2; color: #e11d48; border-color: #fecdd3; }
+  .c-hw-y { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
+  .c-hw-n { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
+  .c-zero { background: #f8fafc; color: #94a3b8; border-color: #e2e8f0; }
+
+  .extra-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .mini-tag {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 4px 9px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .date-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+  .date-bar input { margin-bottom: 0; flex: 1; font-weight: 800; color: var(--pri-d); background: #fff; }
+
+  .donuts-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+  .donuts-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; text-align: center; }
+  .d-box {
+    background: #f8fafc;
+    padding: 12px 6px;
+    border-radius: 18px;
+    border: 1px solid #f1f5f9;
+  }
+  .d-lbl { font-size: 10px; font-weight: 800; color: var(--mut); margin-bottom: 6px; letter-spacing: 0.3px; }
+  
+  .bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 140px;
+    padding: 20px 10px 6px;
+    background: #f8fafc;
+    border-radius: 18px;
+    border: 1px solid #f1f5f9;
+    gap: 8px;
+  }
+  .b-col { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+  .b-fill { width: 100%; max-width: 30px; border-radius: 10px 10px 4px 4px; min-height: 6px; transition: height 0.35s ease; }
+  .b-val { font-size: 11px; font-weight: 800; margin-bottom: 4px; color: var(--txt); }
+  .b-txt { font-size: 9px; font-weight: 700; color: var(--mut); margin-top: 6px; text-align: center; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  .stat-pill { background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 16px; padding: 12px; text-align: center; }
+  .stat-pill .num { font-size: 19px; font-weight: 900; }
+  .stat-pill .lbl { font-size: 11px; font-weight: 700; color: var(--mut); margin-top: 3px; }
+
+  .modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 999;
+    display: none;
+    justify-content: center;
+    align-items: flex-end;
+  }
+  .sheet {
+    background: #ffffff;
+    width: 100%;
+    max-width: 520px;
+    max-height: 88vh;
+    border-radius: 30px 30px 0 0;
+    padding: 22px 20px;
+    overflow-y: auto;
+    box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.15);
+    animation: fadeIn 0.2s ease-out;
+  }
+  .sheet-handle {
+    width: 42px;
+    height: 5px;
+    background: #cbd5e1;
+    border-radius: 10px;
+    margin: -6px auto 14px;
+  }
+  .toast {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 700;
+    z-index: 2000;
+    display: none;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+    text-align: center;
+    width: 88%;
+    max-width: 400px;
+  }
+  .u-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 14px;
+    background: #f8fafc;
+    border-radius: 15px;
+    margin-bottom: 8px;
+    border-left: 4px solid var(--pri);
+    font-size: 12px;
+  }
+  .arch-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-top: 8px;
+  }
+  .arch-tbl th, .arch-tbl td {
+    padding: 8px 6px;
+    text-align: center;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .arch-tbl th {
+    background: #f8fafc;
+    color: var(--mut);
+    font-weight: 800;
+  }
+  .arch-tbl td:first-child, .arch-tbl th:first-child {
+    text-align: left;
+    font-weight: 700;
+  }
+  .copyright-footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--mut);
+    margin-top: 20px;
+    font-weight: 600;
+    padding-bottom: 10px;
+  }
+  .sec-box {
+    background: #fff1f2;
+    border: 1.5px solid #fecdd3;
+    padding: 12px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+  }
+  .sec-lbl {
+    font-size: 11px;
+    font-weight: 800;
+    color: #e11d48;
+    display: block;
+    margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast"></div>
+<div id="modal" class="modal" onclick="if(event.target.id==='modal')closeModal()">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+// =========================================================
+// 1. FIREBASE CLOUD REALTIME DB ТОХИРГОО (8-Р СУРГУУЛЬ)
+// =========================================================
+const FB_URL = 'https://surguul-5405b-default-rtdb.firebaseio.com';
+const FB_REST_ENDPOINT = `${FB_URL}/smart_school_v1.json`;
+const KEY = 'smart_school_8_v5';
+
+let memDB = null;
+let cloudRef = null;
+let cloudStatus = '⏳ Холбогдож байна...';
+let isApplyingRemote = false;
+let saveTimer = null;
+
+function getTodayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+}
+
+function parseDateStr(str) {
+  const parts = String(str || '').split('.');
+  if (parts.length < 3) return 0;
+  return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)).getTime();
+}
+
+function normalizeDate(str) {
+  if (!str) return getTodayStr();
+  const cleaned = str.trim().replace(/[-/]/g, '.');
+  const parts = cleaned.split('.').map(x => parseInt(x, 10)).filter(x => !isNaN(x));
+  if (parts.length === 3) return `${parts[0]}.${parts[1]}.${parts[2]}`;
+  return cleaned;
+}
+
+// Энэ 7 хоногийн Даваа гарагийн огноог олох (Даваа гарагт дата цэвэрлэхэд ашиглана)
+function getCurrentWeekMondayStr() {
+  const now = new Date();
+  const day = now.getDay(); // 0 = Ням, 1 = Даваа ... 6 = Бямба
+  const diff = (day === 0 ? -6 : 1 - day);
+  const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+  return `${mon.getFullYear()}.${mon.getMonth() + 1}.${mon.getDate()}`;
+}
+
+function getSortedClassList() {
+  return Object.keys(db.classes || {}).sort((a, b) => a.localeCompare(b, 'mn', { numeric: true }));
+}
+
+function defaultData() {
+  return {
+    lastWeeklyResetMonday: getCurrentWeekMondayStr(),
+    lastLateResetDate: getTodayStr(),
+    users: [
+      { u: 'manager', p: '1234', role: 'manager', cls: 'Бүгд', label: 'Сургуулийн Менежер' },
+      { u: 'social', p: '1234', role: 'social', cls: 'Бүгд', label: 'Нийгмийн Ажилтан' }
+    ],
+    classes: {}
+  };
+}
+
+function ensureStructure(data) {
+  if (!data || typeof data !== 'object') return defaultData();
+  if (!Array.isArray(data.users)) data.users = defaultData().users;
+  if (!data.classes || typeof data.classes !== 'object') data.classes = {};
+  if (!data.lastWeeklyResetMonday) data.lastWeeklyResetMonday = getCurrentWeekMondayStr();
+  if (!data.lastLateResetDate) data.lastLateResetDate = getTodayStr();
+
+  Object.keys(data.classes).forEach(k => {
+    const c = data.classes[k];
+    if (!c.shift) c.shift = 'Өглөө';
+    if (!c.schedule) c.schedule = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+    for (let d = 1; d <= 5; d++) {
+      if (!Array.isArray(c.schedule[d])) c.schedule[d] = [];
+    }
+    if (!Array.isArray(c.students)) c.students = [];
+    if (!c.records || typeof c.records !== 'object') c.records = {};
+  });
+  return data;
+}
+
+// =========================================================
+// АВТОМАТ УСТГАЛТЫН ЛОГИК (ДАВАА ГАРАГ БҮР + ШӨНИЙН 00:00 ЦАГТ)
+// =========================================================
+function checkAndRunAutoResets(shouldSave = true) {
+  if (!db || !db.classes) return;
+  let changed = false;
+
+  const todayStr = getTodayStr();
+  const curMondayStr = getCurrentWeekMondayStr();
+  const curMondayMs = parseDateStr(curMondayStr);
+
+  // 1. Хоцролтын 24 цагийн самбар: Шөнийн 00:00 цагт өмнөх өдрийн хоцролтын датаг устгаж 00:01-ээс шинээр авна
+  if (db.lastLateResetDate !== todayStr) {
+    Object.keys(db.classes).forEach(cName => {
+      const recs = db.classes[cName].records || {};
+      Object.keys(recs).forEach(dKey => {
+        if (dKey !== todayStr) {
+          Object.keys(recs[dKey] || {}).forEach(stIdx => {
+            if (recs[dKey][stIdx] && recs[dKey][stIdx].lateMin) {
+              recs[dKey][stIdx].lateMin = 0;
+            }
+          });
+        }
+      });
+    });
+    db.lastLateResetDate = todayStr;
+    changed = true;
+  }
+
+  // Өнөөдрөөс өмнөх өдрүүдийн lateMin үлдсэн байвал цэвэрлэх
+  Object.keys(db.classes).forEach(cName => {
+    const recs = db.classes[cName].records || {};
+    Object.keys(recs).forEach(dKey => {
+      if (dKey !== todayStr) {
+        Object.keys(recs[dKey] || {}).forEach(stIdx => {
+          if (recs[dKey][stIdx] && recs[dKey][stIdx].lateMin > 0) {
+            recs[dKey][stIdx].lateMin = 0;
+            changed = true;
+          }
+        });
+      }
+    });
+  });
+
+  // 2. Долоо хоногийн 3 самбар: 1 дэх өдөр (Даваа гараг) бүр өмнөх 7 хоногийн датаг датабаазаас устгана
+  if (db.lastWeeklyResetMonday !== curMondayStr) {
+    Object.keys(db.classes).forEach(cName => {
+      const recs = db.classes[cName].records || {};
+      Object.keys(recs).forEach(dKey => {
+        if (parseDateStr(dKey) < curMondayMs) {
+          delete recs[dKey];
+        }
+      });
+    });
+    db.lastWeeklyResetMonday = curMondayStr;
+    changed = true;
+  }
+
+  if (changed && shouldSave) {
+    saveDB();
+  }
+}
+
+// Шөнийн 00:00 -> 00:01 шилжилтийг автоматаар хянах таймер
+setInterval(() => {
+  const newToday = getTodayStr();
+  if (db && db.lastLateResetDate !== newToday) {
+    curDate = newToday;
+    checkAndRunAutoResets(true);
+    render();
+  }
+}, 30000);
+
+function loadDB() {
+  try {
+    const s = window.localStorage.getItem(KEY);
+    if (s) return ensureStructure(JSON.parse(s));
+  } catch(e) {}
+  if (!memDB) memDB = defaultData();
+  return memDB;
+}
+
+function saveLocalOnly() {
+  try { window.localStorage.setItem(KEY, JSON.stringify(db)); } catch(e) {}
+  memDB = db;
+}
+
+function pushToCloud() {
+  if (isApplyingRemote) return;
+  const payloadObj = {
+    payload: JSON.stringify(db),
+    updatedAt: Date.now()
+  };
+
+  if (cloudRef) {
+    cloudRef.set(payloadObj).then(() => {
+      cloudStatus = '☁️ Онлайн';
+      updateCloudBadge();
+    }).catch(() => {
+      pushViaRest(payloadObj);
+    });
+  } else {
+    pushViaRest(payloadObj);
+  }
+}
+
+function pushViaRest(payloadObj) {
+  fetch(FB_REST_ENDPOINT, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payloadObj)
+  }).then(r => {
+    if (r.ok) {
+      cloudStatus = '☁️ Онлайн';
+      updateCloudBadge();
+    }
+  }).catch(() => {
+    cloudStatus = '⚠️ Офлайн';
+    updateCloudBadge();
+  });
+}
+
+function saveDB(debounce = false) {
+  saveLocalOnly();
+  if (debounce) {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => pushToCloud(), 450);
+  } else {
+    pushToCloud();
+  }
+}
+
+function applyIncomingCloudData(val) {
+  if (!val || !val.payload) {
+    pushToCloud();
+    cloudStatus = '☁️ Онлайн';
+    updateCloudBadge();
+    return;
+  }
+  try {
+    const parsed = ensureStructure(JSON.parse(val.payload));
+    isApplyingRemote = true;
+    db = parsed;
+    checkAndRunAutoResets(false);
+
+    if (curUser) {
+      const updatedMe = db.users.find(x => x.u === curUser.u);
+      if (updatedMe) curUser = updatedMe;
+    }
+
+    saveLocalOnly();
+    isApplyingRemote = false;
+    cloudStatus = '☁️ Онлайн';
+
+    const activeTag = document.activeElement ? document.activeElement.tagName : '';
+    const isModalOpen = document.getElementById('modal').style.display === 'flex';
+    if (!isModalOpen && activeTag !== 'INPUT' && activeTag !== 'TEXTAREA' && activeTag !== 'SELECT') {
+      render();
+    } else {
+      updateCloudBadge();
+    }
+  } catch (e) {}
+}
+
+function manualSyncCloud() {
+  cloudStatus = '🔄 Шинэчилж байна...';
+  updateCloudBadge();
+  fetch(FB_REST_ENDPOINT)
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.payload) {
+        applyIncomingCloudData(data);
+        notify('☁️ Бүх төхөөрөмжийн мэдээлэл шинэчлэгдлээ!');
+      } else {
+        pushToCloud();
+        notify('☁️ Мэдээлэл үүлэн санах ойд хадгалагдлаа!');
+      }
+    })
+    .catch(() => {
+      cloudStatus = '⚠️ Офлайн';
+      updateCloudBadge();
+      notify('⚠️ Интернэт холболтоо шалгана уу!');
+    });
+}
+
+function initFirebaseCloud() {
+  fetch(FB_REST_ENDPOINT)
+    .then(r => r.json())
+    .then(data => {
+      applyIncomingCloudData(data);
+    })
+    .catch(() => {
+      cloudStatus = '⚠️ Офлайн';
+      updateCloudBadge();
+    });
+
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps.length) {
+        firebase.initializeApp({ databaseURL: FB_URL });
+      }
+      cloudRef = firebase.database().ref('smart_school_v1');
+      cloudRef.on('value', snapshot => {
+        const val = snapshot.val();
+        if (val) applyIncomingCloudData(val);
+      });
+    }
+  } catch (e) {}
+}
+
+function updateCloudBadge() {
+  const el = document.getElementById('cloud_ind');
+  if (el) el.innerText = cloudStatus + ' 🔄';
+}
+
+let db = loadDB();
+checkAndRunAutoResets(false);
+
+let curUser = null;
+let curTab = 'main';
+let curDate = getTodayStr();
+let curDay = new Date().getDay() || 1;
+if (curDay > 5) curDay = 1;
+let curClassFilter = Object.keys(db.classes)[0] || '';
+let curArchiveClass = 'Бүгд';
+let curPeriod = '7d';
+let selectedDashDownload = 'all';
+
+function isEditLocked() {
+  if (!curUser || (curUser.role !== 'teacher' && curUser.role !== 'leader')) return false;
+  const curMs = parseDateStr(curDate);
+  const todayMs = parseDateStr(getTodayStr());
+  if (curMs < todayMs) {
+    notify('⚠️ Өнгөрсөн өдрийн мэдээллийг засах боломжгүй зөвхөн харах эрхтэй!');
+    return true;
+  }
+  return false;
+}
+
+function verifyManagerPassword(inputPass) {
+  const mgr = db.users.find(u => u.role === 'manager') || curUser;
+  if (!mgr) return false;
+  return inputPass === mgr.p;
+}
+
+function notify(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2800);
+}
+function openModal(html) {
+  document.getElementById('sheet').innerHTML = `<div class="sheet-handle"></div>` + html;
+  document.getElementById('modal').style.display = 'flex';
+}
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+function getDayRecord(clsObj, dateStr, stIdx) {
+  const dKey = normalizeDate(dateStr);
+  if (!clsObj.records) clsObj.records = {};
+  if (!clsObj.records[dKey]) clsObj.records[dKey] = {};
+  if (!clsObj.records[dKey][stIdx]) {
+    clsObj.records[dKey][stIdx] = {
+      status: 'present',
+      uniform: true,
+      hw: {},
+      leaveReason: '',
+      lateMin: 0,
+      skipHours: 0
+    };
+  }
+  if (clsObj.records[dKey][stIdx].lateMin === undefined) clsObj.records[dKey][stIdx].lateMin = 0;
+  if (clsObj.records[dKey][stIdx].skipHours === undefined) clsObj.records[dKey][stIdx].skipHours = 0;
+  return clsObj.records[dKey][stIdx];
+}
+
+function isHwDoneForDate(clsObj, dateStr, stIdx, subj) {
+  const rec = getDayRecord(clsObj, dateStr, stIdx);
+  if (rec.status !== 'present') return false; 
+  if (!rec.hw) rec.hw = {};
+  if (rec.hw[subj] === undefined) rec.hw[subj] = true;
+  return rec.hw[subj];
+}
+
+function updateLeaveReason(idx, val) {
+  if (isEditLocked()) return;
+  const cls = db.classes[curUser.cls];
+  const rec = getDayRecord(cls, curDate, idx);
+  rec.leaveReason = val.substring(0, 40); 
+  saveDB(true);
+}
+
+function getStudentPersonalStats(clsObj, stIdx) {
+  let present = 0, absent = 0, leave = 0, sick = 0, noUni = 0, noHw = 0, midSkipCnt = 0, midSkipHours = 0;
+  const history = [];
+  
+  Object.keys(clsObj.records || {}).sort().reverse().forEach(dKey => {
+    const r = clsObj.records[dKey][stIdx];
+    if (!r) return;
+    if (r.skipHours > 0) {
+      midSkipCnt++;
+      midSkipHours += r.skipHours;
+    }
+    if (r.status === 'absent') {
+      absent++;
+      history.push({ date: dKey, txt: `❌ Бүтэн тасалсан${r.skipHours ? ' (' + r.skipHours + ' цаг)' : ''}` });
+    } else if (r.status === 'leave') {
+      leave++;
+      const reasonTxt = r.leaveReason ? ` | Шалтгаан: ${r.leaveReason}` : '';
+      history.push({ date: dKey, txt: `🏃 Чөлөөтэй${reasonTxt}` });
+    } else if (r.status === 'sick') {
+      sick++;
+      const reasonTxt = r.leaveReason ? ` | Шалтгаан: ${r.leaveReason}` : '';
+      history.push({ date: dKey, txt: `🤒 Өвчтэй${reasonTxt}` });
+    } else if (r.status === 'present') {
+      present++;
+      if (!r.uniform) noUni++;
+      const missedList = Object.keys(r.hw || {}).filter(k => r.hw[k] === false);
+      if (missedList.length > 0) noHw++;
+      const extra lateOrSkip = [
+        r.lateMin > 0 ? `⏱️ Хоцролт: ${r.lateMin}м` : '',
+        r.skipHours > 0 ? `🏃 Дундаас тасалсан: ${r.skipHours} цаг` : ''
+      ].filter(Boolean).join(' | ');
+      history.push({
+        date: dKey,
+        txt: `✅ Ирсэн | ${r.uniform ? '👕 Формтой' : '❌ Формгүй'} | ${missedList.length === 0 ? 'Д/Г Бүрэн' : 'Д/Г Дутуу'}${lateOrSkip ? ' | ' + lateOrSkip : ''}`
+      });
+    }
+  });
+
+  return { present, absent, leave, sick, noUni, noHw, midSkipCnt, midSkipHours, history };
+}
+
+function applyDateSearch(inputId) {
+  const el = document.getElementById(inputId);
+  if (!el || !el.value.trim()) return notify('⚠️ Он сар өдрөө бичнэ үү!');
+  
+  const searchDate = normalizeDate(el.value);
+  const searchMs = parseDateStr(searchDate);
+  const todayMs = parseDateStr(getTodayStr());
+
+  if ((curUser.role === 'teacher' || curUser.role === 'leader') && searchMs > todayMs) {
+    return notify('⚠️ Ирээдүйн огнооны бүртгэлийг урьдчилж оруулах боломжгүй!');
+  }
+
+  curDate = searchDate;
+  const d = new Date(searchMs);
+  const dow = d.getDay();
+  if (dow >= 1 && dow <= 5) curDay = dow;
+
+  notify(`📅 ${curDate} өдрийн мэдээлэл гарлаа!`);
+  render();
+}
+
+function renderDateSearchBox(inputId) {
+  const isToday = parseDateStr(curDate) === parseDateStr(getTodayStr());
+  return `
+    <div class="card" style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border-color:#e0e7ff">
+      <div class="title" style="margin-bottom:8px;color:var(--pri-d)">
+        <span>📅 Огноогоор харах</span>
+        <span style="font-size:11px;background:#fff;padding:4px 10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.04)">
+          ${curDate} ${isToday ? '(Өнөөдөр)' : ''}
+        </span>
+      </div>
+      <div class="date-bar">
+        <input id="${inputId}" value="${curDate}" placeholder="Жнь: ${getTodayStr()}">
+        <button class="btn btn-p" style="width:auto;padding:12px 16px" onclick="applyDateSearch('${inputId}')">🔍 Харах</button>
+      </div>
+      ${!isToday ? `<button class="btn btn-sm btn-g" style="margin-top:6px;width:100%" onclick="curDate=getTodayStr();render()">🔄 Өнөөдөр лүү буцах (${getTodayStr()})</button>` : ''}
+    </div>
+  `;
+}
+
+// =========================================================
+// 2. ҮНДСЭН ДЭЛГЭЦ ЗУРАХ ХЭСЭГ
+// =========================================================
+function render() {
+  const app = document.getElementById('app');
+  if (!curUser) {
+    app.innerHTML = renderLogin();
+    return;
+  }
+
+  if (curUser.role === 'teacher' || curUser.role === 'leader') {
+    curClassFilter = curUser.cls;
+    curArchiveClass = curUser.cls;
+  }
+
+  let body = '';
+  if (curUser.role === 'manager') body = renderManager();
+  else if (curUser.role === 'social') body = renderSocial();
+  else if (curUser.role === 'teacher') body = renderTeacher();
+  else if (curUser.role === 'leader') body = renderLeader();
+
+  app.innerHTML = `
+    <div class="hdr">
+      <div class="hdr-top">
+        <h1>Ухаалаг сургууль — 8-р сургууль</h1>
+        <button class="btn-out" onclick="logout()">Гарах 🚪</button>
+      </div>
+      <div class="badge-row">
+        <div class="badge">👤 ${curUser.label} • Хаяг: ${curUser.u}</div>
+        <div id="cloud_ind" class="cloud-pill" onclick="manualSyncCloud()">${cloudStatus} 🔄</div>
+      </div>
+    </div>
+    <div class="wrap">
+      ${body}
+      <div class="copyright-footer">Copyright © 2026 У.Элбэг, Э.Батсайхан</div>
+    </div>
+  `;
+}
+
+// =========================================================
+// 3. НЭВТРЭХ ХЭСЭГ
+// =========================================================
+function renderLogin() {
+  return `
+    <div class="hdr" style="padding:36px 22px;">
+      <div class="hdr-top">
+        <h1>Ухаалаг сургууль — 8-р сургууль</h1>
+        <div id="cloud_ind" class="cloud-pill" onclick="manualSyncCloud()">${cloudStatus} 🔄</div>
+      </div>
+      <div class="badge" style="margin-top:10px">Сурагчдын ирц, форм, даалгаврын нэгдсэн систем</div>
+    </div>
+    <div class="wrap">
+      <div class="card">
+        <div class="title">🔐 Системд нэвтрэх</div>
+        <label style="font-size:11px;font-weight:700;color:var(--mut);display:block;margin-bottom:4px">Нэвтрэх нэр</label>
+        <input id="l_user" placeholder="Нэвтрэх нэрээ оруулна уу" autocomplete="username">
+        <label style="font-size:11px;font-weight:700;color:var(--mut);display:block;margin-bottom:4px">Нууц үг</label>
+        <input id="l_pass" type="password" placeholder="Нууц үгээ оруулна уу" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="btn btn-p" onclick="doLogin()">🚀 Нэвтрэх</button>
+      </div>
+      <div class="copyright-footer">Copyright © 2026 У.Элбэг, Э.Батсайхан</div>
+    </div>
+  `;
+}
+
+function doLogin() {
+  const u = document.getElementById('l_user').value.trim();
+  const p = document.getElementById('l_pass').value.trim();
+  const found = db.users.find(x => x.u.toLowerCase() === u.toLowerCase() && x.p === p);
+  if (!found) return notify('❌ Нэвтрэх нэр эсвэл нууц үг буруу байна!');
+  curUser = found;
+  if (found.cls !== 'Бүгд') {
+    curClassFilter = found.cls;
+    curArchiveClass = found.cls;
+  } else {
+    curArchiveClass = 'Бүгд';
+  }
+  curTab = 'main';
+  curDate = getTodayStr();
+  let dow = new Date().getDay();
+  if (dow >= 1 && dow <= 5) curDay = dow;
+  notify(`✅ Тавтай морил, ${found.label}!`);
+  render();
+}
+
+function logout() { curUser = null; render(); }
+
+// =========================================================
+// 4. МЕНЕЖЕР ХЭСЭГ
+// =========================================================
+function renderManager() {
+  let mgrContent = '';
+  if (curTab === 'main') {
+    let usersHtml = db.users.map((u, idx) => {
+      let delBtn = u.role !== 'manager' ? `<button class="btn btn-sm btn-err" onclick="askDelUserModal(${idx})">🗑️</button>` : '';
+      return `
+        <div class="u-row">
+          <div>
+            <b>${u.label}</b> <span style="color:var(--pri)">[${u.cls}]</span><br>
+            <span style="color:var(--mut)">Нэр: <b>${u.u}</b> • Pass: <b>${u.p}</b></span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm btn-g" onclick="changePassModal(${idx})">🔑 Солих</button>
+            ${delBtn}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const clsKeys = getSortedClassList();
+    let clsManageHtml = clsKeys.length === 0
+      ? `<p style="font-size:12px;color:var(--mut)">Одоогоор үүссэн анги байхгүй байна.</p>`
+      : clsKeys.map(cName => `
+          <div class="u-row" style="border-left-color:var(--ok)">
+            <div>
+              <b>🏫 ${cName} анги</b><br>
+              <span style="color:var(--mut)">Сурагчид: <b>${(db.classes[cName].students||[]).length}</b> • Бүртгэсэн өдөр: <b>${Object.keys(db.classes[cName].records||{}).length}</b></span>
+            </div>
+            <button class="btn btn-sm btn-err" onclick="askDeleteClassModal('${cName}')">🗑️ Устгах</button>
+          </div>
+        `).join('');
+
+    mgrContent = `
+      <div class="card">
+        <div class="title">➕ Шинэ хаяг нээх</div>
+        <select id="cu_role" onchange="toggleClassInput()">
+          <option value="teacher">Анги удирдсан багш</option>
+          <option value="leader">Ангийн дарга</option>
+          <option value="social">Нийгмийн ажилтан</option>
+        </select>
+        <input id="cu_cls" placeholder="Анги (Жишээ нь: 9А, 10Б, 11Г)">
+        <input id="cu_user" placeholder="Нэвтрэх нэр зохиох">
+        <input id="cu_pass" placeholder="Нууц үг зохиох">
+        <button class="btn btn-p" onclick="createUser()">✨ Хаяг үүсгэх</button>
+      </div>
+      <div class="card">
+        <div class="title">🔑 Бүх хаягууд & Нууц үг удирдах</div>
+        ${usersHtml}
+      </div>
+      <div class="card">
+        <div class="title">🏫 Үүссэн ангиуд ба Архив удирдах</div>
+        ${clsManageHtml}
+      </div>
+    `;
+  } else if (curTab === 'stats') {
+    mgrContent = renderSocialAnalytics();
+  } else if (curTab === 'dash') {
+    mgrContent = renderDashboardsSection();
+  } else if (curTab === 'archive') {
+    mgrContent = renderArchiveSection();
+  }
+
+  return `
+    <div class="tabs">
+      <button class="tab ${curTab==='main'?'active':''}" onclick="curTab='main';render()">👥 Хаяг нээх</button>
+      <button class="tab ${curTab==='stats'?'active':''}" onclick="curTab='stats';render()">📊 Тайлан</button>
+      <button class="tab ${curTab==='dash'?'active':''}" onclick="curTab='dash';render()">🏆 Самбар</button>
+      <button class="tab ${curTab==='archive'?'active':''}" onclick="curTab='archive';render()">📦 Архив</button>
+    </div>
+    ${mgrContent}
+  `;
+}
+
+function toggleClassInput() {
+  const r = document.getElementById('cu_role').value;
+  document.getElementById('cu_cls').style.display = (r === 'social') ? 'none' : 'block';
+}
+
+function createUser() {
+  const role = document.getElementById('cu_role').value;
+  const cls = role === 'social' ? 'Бүгд' : document.getElementById('cu_cls').value.trim().toUpperCase();
+  const u = document.getElementById('cu_user').value.trim();
+  const p = document.getElementById('cu_pass').value.trim();
+  if (!u || !p || (role !== 'social' && !cls)) return notify('⚠️ Бүх талбарыг бөглөнө үү!');
+  if (db.users.some(x => x.u.toLowerCase() === u.toLowerCase())) return notify('⚠️ Энэ нэвтрэх нэр бүртгэлтэй байна!');
+
+  const roleNames = { social: 'Нийгмийн ажилтан', teacher: `${cls} Ангийн багш`, leader: `${cls} Ангийн дарга` };
+  db.users.push({ u, p, role, cls, label: roleNames[role] });
+
+  if (cls !== 'Бүгд' && !db.classes[cls]) {
+    db.classes[cls] = {
+      shift: 'Өглөө',
+      schedule: { 1: [], 2: [], 3: [], 4: [], 5: [] },
+      students: [],
+      records: {}
+    };
+  }
+  if (cls !== 'Бүгд') curClassFilter = cls;
+  saveDB();
+  notify(`✅ ${u} хаяг амжилттай үүслээ!`);
+  render();
+}
+
+function changePassModal(idx) {
+  const target = db.users[idx];
+  openModal(`
+    <div class="title">
+      <span>🔑 Нууц үг солих: ${target.u}</span>
+      <button class="btn btn-sm btn-g" onclick="closeModal()">✕</button>
+    </div>
+    <label style="font-size:11px;font-weight:700;color:var(--mut);display:block;margin-bottom:4px">Шинэ нууц үг (${target.label}):</label>
+    <input id="np_val" value="${target.p}" placeholder="Шинэ нууц үг оруулах">
+    <div class="sec-box">
+      <label class="sec-lbl">🔒 Баталгаажуулалт: Менежерийн өөрийн нууц үгийг оруулна уу</label>
+      <input id="mgr_auth_pass" type="password" placeholder="Менежерийн нууц үг..." style="margin-bottom:0;background:#fff">
+    </div>
+    <button class="btn btn-p" onclick="saveNewPass(${idx})">💾 Баталгаажуулж хадгалах</button>
+  `);
+}
+
+function saveNewPass(idx) {
+  const v = document.getElementById('np_val').value.trim();
+  const mgrPass = document.getElementById('mgr_auth_pass').value.trim();
+  if (!v) return notify('⚠️ Шинэ нууц үгээ оруулна уу!');
+  if (!mgrPass) return notify('⚠️ Менежерийн нууц үгийг оруулна уу!');
+  if (!verifyManagerPassword(mgrPass)) return notify('❌ Менежерийн нууц үг буруу байна!');
+
+  db.users[idx].p = v;
+  if (curUser && curUser.u === db.users[idx].u) curUser.p = v;
+  saveDB();
+  closeModal();
+  notify('✅ Нууц үг амжилттай солигдлоо!');
+  render();
+}
+
+function askDelUserModal(idx) {
+  const target = db.users[idx];
+  if (!target || target.role === 'manager') return;
+  openModal(`
+    <div class="title">
+      <span>🗑️ Хаяг устгах: ${target.u}</span>
+      <button class="btn btn-sm btn-g" onclick="closeModal()">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--txt);margin-bottom:12px;line-height:1.5">
+      Та <b>${target.label} (${target.u})</b> хаягийг системээс устгахдаа итгэлтэй байна уу?
+    </p>
+    <div class="sec-box">
+      <label class="sec-lbl">🔒 Менежерийн өөрийн нууц үгийг оруулна уу:</label>
+      <input id="mgr_del_user_pass" type="password" placeholder="Менежерийн нууц үг..." style="margin-bottom:0;background:#fff">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-err" onclick="confirmDelUser(${idx})">🗑️ Тийм, устгах</button>
+      <button class="btn btn-g" onclick="closeModal()">Болих</button>
+    </div>
+  `);
+}
+
+function confirmDelUser(idx) {
+  const mgrPass = document.getElementById('mgr_del_user_pass').value.trim();
+  if (!mgrPass) return notify('⚠️ Менежерийн нууц үгийг оруулна уу!');
+  if (!verifyManagerPassword(mgrPass)) return notify('❌ Менежерийн нууц үг буруу байна!');
+
+  const removed = db.users.splice(idx, 1);
+  saveDB();
+  closeModal();
+  notify(`🗑️ ${removed[0] ? removed[0].u : ''} хаяг устгагдлаа!`);
+  render();
+}
+
+function askDeleteClassModal(cName) {
+  openModal(`
+    <div class="title">
+      <span>🗑️ ${cName} ангийн архив устгах</span>
+      <button class="btn btn-sm btn-g" onclick="closeModal()">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--txt);margin-bottom:12px;line-height:1.5">
+      Та <b>${cName}</b> ангийн бүх сурагчдын жагсаалт, ирцийн түүх болон архивыг бүрмөсөн устгахдаа итгэлтэй байна уу?
+    </p>
+    <div class="sec-box">
+      <label class="sec-lbl">🔒 Менежерийн өөрийн нууц үгийг оруулна уу:</label>
+      <input id="mgr_del_cls_pass" type="password" placeholder="Менежерийн нууц үг..." style="margin-bottom:0;background:#fff">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-err" onclick="confirmDeleteClassData('${cName}')">🗑️ Бүрмөсөн устгах</button>
+      <button class="btn btn-g" onclick="closeModal()">Болих</button>
+    </div>
+  `);
+}
+
+function confirmDeleteClassData(cName) {
+  const mgrPass = document.getElementById('mgr_del_cls_pass').value.trim();
+  if (!mgrPass) return notify('⚠️ Менежерийн нууц үгийг оруулна уу!');
+  if (!verifyManagerPassword(mgrPass)) return notify('❌ Менежерийн нууц үг буруу байна!');
+
+  delete db.classes[cName];
+  db.users = db.users.filter(u => u.cls !== cName || u.role === 'manager');
+  const remaining = getSortedClassList();
+  curClassFilter = remaining[0] || '';
+  if (curArchiveClass === cName) curArchiveClass = 'Бүгд';
+
+  saveDB();
+  closeModal();
+  notify(`🗑️ ${cName} ангийн архив болон холбогдох хаягууд устгагдлаа!`);
+  render();
+}
+
+// =========================================================
+// 5. НИЙГМИЙН АЖИЛТАН БА 4 САМБАР (DASHBOARDS)
+// =========================================================
+function renderSocial() {
+  let content = '';
+  if (curTab === 'dash') content = renderDashboardsSection();
+  else if (curTab === 'archive') content = renderArchiveSection();
+  else content = renderSocialAnalytics();
+
+  return `
+    <div class="tabs">
+      <button class="tab ${curTab==='main' || curTab==='stats'?'active':''}" onclick="curTab='main';render()">📊 Тайлан</button>
+      <button class="tab ${curTab==='dash'?'active':''}" onclick="curTab='dash';render()">🏆 Самбар (4)</button>
+      <button class="tab ${curTab==='archive'?'active':''}" onclick="curTab='archive';render()">📦 Архив</button>
+    </div>
+    ${content}
+  `;
+}
+
+// Бүх ангийн хэмжээнд 4 самбарын датаг тооцоолох функц
+function computeAllDashboardsData() {
+  const curMondayStr = getCurrentWeekMondayStr();
+  const curMondayMs = parseDateStr(curMondayStr);
+  const todayStr = getTodayStr();
+
+  const fullAbsentList = [];   // 1. Хичээл бүтэн таслалт (7 хоногоор)
+  const midSkipList = [];      // 2. Хичээлийн дундаас таслалт 1-7 цаг (7 хоногоор)
+  const noUniformList = [];    // 3. Формгүй ирсэн хүүхдүүд (7 хоногоор)
+  const dailyLateList = [];    // 4. Хоцролтын самбар (24 цагаар - өнөөдрийнх)
+
+  const clsKeys = getSortedClassList();
+
+  clsKeys.forEach(cName => {
+    const cObj = db.classes[cName];
+    if (!cObj || !Array.isArray(cObj.students)) return;
+
+    cObj.students.forEach((st, idx) => {
+      let fullAbsCnt = 0;
+      let midSkipTimes = 0;
+      let midSkipTotalHours = 0;
+      let noUniCnt = 0;
+
+      // 7 хоногийн датаг шүүх (Даваа гарагаас хойш)
+      Object.keys(cObj.records || {}).forEach(dKey => {
+        if (parseDateStr(dKey) >= curMondayMs) {
+          const r = cObj.records[dKey][idx];
+          if (!r) return;
+          if (r.status === 'absent') {
+            fullAbsCnt++;
+          }
+          if (r.skipHours && r.skipHours > 0) {
+            midSkipTimes++;
+            midSkipTotalHours += r.skipHours;
+          }
+          if (r.status === 'present' && r.uniform === false) {
+            noUniCnt++;
+          }
+        }
+      });
+
+      if (fullAbsCnt > 0) {
+        fullAbsentList.push({ name: st.name, cls: cName, count: fullAbsCnt });
+      }
+      if (midSkipTotalHours > 0) {
+        midSkipList.push({ name: st.name, cls: cName, times: midSkipTimes, hours: midSkipTotalHours });
+      }
+      if (noUniCnt > 0) {
+        noUniformList.push({ name: st.name, cls: cName, count: noUniCnt });
+      }
+
+      // 4-р самбар: Өнөөдрийн (24 цагийн) хоцролт
+      const todayRec = (cObj.records && cObj.records[todayStr]) ? cObj.records[todayStr][idx] : null;
+      if (todayRec && todayRec.lateMin && todayRec.lateMin > 0) {
+        dailyLateList.push({ name: st.name, cls: cName, lateMin: todayRec.lateMin });
+      }
+    });
+  });
+
+  // Хамгийн их зөрчилтэйгээр нь буурахаар эрэмбэлэх
+  fullAbsentList.sort((a, b) => b.count - a.count);
+  midSkipList.sort((a, b) => b.hours - a.hours || b.times - a.times);
+  noUniformList.sort((a, b) => b.count - a.count);
+  dailyLateList.sort((a, b) => b.lateMin - a.lateMin);
+
+  return { fullAbsentList, midSkipList, noUniformList, dailyLateList, curMondayStr, todayStr };
+}
+
+function renderDashboardsSection() {
+  const { fullAbsentList, midSkipList, noUniformList, dailyLateList, curMondayStr, todayStr } = computeAllDashboardsData();
+  const dow = new Date().getDay(); // 5 = Баасан, 6 = Бямба, 0 = Ням
+  const isDownloadDay = (dow === 5 || dow === 6 || dow === 0);
+  const dayNames = ['Ням', 'Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан', 'Бямба'];
+
+  // 1. Бүтэн таслалтын мөрүүд
+  let board1Html = fullAbsentList.length === 0
+    ? `<div style="font-size:12px;color:#059669;background:#ecfdf5;padding:10px 12px;border-radius:12px;font-weight:700">Энэ 7 хоногт бүтэн тасалсан сурагч байхгүй байна ✅</div>`
+    : fullAbsentList.map((item, i) => `
+        <div class="dash-item" style="border-left-color:#f43f5e">
+          <div>
+            <span style="color:var(--mut);font-size:11px">#${i + 1}</span>
+            <b style="margin-left:4px;color:#0f172a">${item.name}</b>
+            <span style="color:#4f46e5;font-weight:800;margin-left:6px">${item.cls}</span>
+          </div>
+          <span class="dash-rank" style="background:#ffe4e6;color:#e11d48">Таслалт ${item.count}</span>
+        </div>
+      `).join('');
+
+  // 2. Хичээлийн дундаас таслалтын мөрүүд (1-7 цаг)
+  let board2Html = midSkipList.length === 0
+    ? `<div style="font-size:12px;color:#059669;background:#ecfdf5;padding:10px 12px;border-radius:12px;font-weight:700">Энэ 7 хоногт хичээлийн дундаас тасалсан сурагч байхгүй ✅</div>`
+    : midSkipList.map((item, i) => `
+        <div class="dash-item" style="border-left-color:#a855f7">
+          <div>
+            <span style="color:var(--mut);font-size:11px">#${i + 1}</span>
+            <b style="margin-left:4px;color:#0f172a">${item.name}</b>
+            <span style="color:#4f46e5;font-weight:800;margin-left:6px">${item.cls}</span>
+          </div>
+          <span class="dash-rank" style="background:#f3e8ff;color:#7e22ce">Таслалт ${item.hours} цаг (${item.times} удаа)</span>
+        </div>
+      `).join('');
+
+  // 3. Формгүй ирсэн хүүхдүүдийн мөрүүд
+  let board3Html = noUniformList.length === 0
+    ? `<div style="font-size:12px;color:#059669;background:#ecfdf5;padding:10px 12px;border-radius:12px;font-weight:700">Энэ 7 хоногт формгүй ирсэн зөрчил байхгүй ✅</div>`
+    : noUniformList.map((item, i) => `
+        <div class="dash-item" style="border-left-color:#0284c7">
+          <div>
+            <span style="color:var(--mut);font-size:11px">#${i + 1}</span>
+            <b style="margin-left:4px;color:#0f172a">${item.name}</b>
+            <span style="color:#4f46e5;font-weight:800;margin-left:6px">${item.cls}</span>
+          </div>
+          <span class="dash-rank" style="background:#e0f2fe;color:#0369a1">Формгүй ${item.count}</span>
+        </div>
+      `).join('');
+
+  // 4. Хоцролтын 24 цагийн самбарын мөрүүд
+  let board4Html = dailyLateList.length === 0
+    ? `<div style="font-size:12px;color:#059669;background:#ecfdf5;padding:10px 12px;border-radius:12px;font-weight:700">Өнөөдөр (${todayStr}) хоцорсон сурагч бүртгэгдээгүй байна ✅</div>`
+    : dailyLateList.map((item, i) => `
+        <div class="dash-item" style="border-left-color:#f59e0b">
+          <div>
+            <span style="color:var(--mut);font-size:11px">#${i + 1}</span>
+            <b style="margin-left:4px;color:#0f172a">${item.name}</b>
+            <span style="color:#4f46e5;font-weight:800;margin-left:6px">${item.cls}</span>
+          </div>
+          <span class="dash-rank" style="background:#fef3c7;color:#d97706">Хоцролт ${item.lateMin} мин</span>
+        </div>
+      `).join('');
+
+  return `
+    <!-- 7 ХОНОГИЙН 3 САМБАР ТАТАХ ХЭСЭГ -->
+    <div class="card" style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:1.5px solid #c7d2fe">
+      <div class="title" style="color:var(--pri-d)">
+        <span>📥 7 хоногийн самбар татах</span>
+        <span style="font-size:10px;background:#fff;padding:4px 9px;border-radius:10px;color:#4338ca">Эхэлсэн: ${curMondayStr}</span>
+      </div>
+      <p style="font-size:11px;color:#334155;margin-bottom:10px;line-height:1.5">
+        📌 <b>Дүрэм:</b> Эхний 3 самбар <b>7 хоногоор</b> харагдаж, <b>Даваа гараг (1 дэх өдөр)</b> бүр датабаазаас автоматаар устана. Нийгмийн ажилтан болон Менежер <b>Баасан, Бямба, Ням</b> гарагуудад самбараа сонгож татаж авна.
+      </p>
+      <label style="font-size:11px;font-weight:800;color:var(--pri-d);display:block;margin-bottom:4px">Татах самбараа сонгоно уу:</label>
+      <select id="dash_dl_select" onchange="selectedDashDownload=this.value" style="background:#fff">
+        <option value="all" ${selectedDashDownload==='all'?'selected':''}>📊 Бүх 3 самбарыг нэгтгэж татах</option>
+        <option value="board1" ${selectedDashDownload==='board1'?'selected':''}>1️⃣ Хичээл бүтэн таслалтын самбар</option>
+        <option value="board2" ${selectedDashDownload==='board2'?'selected':''}>2️⃣ Хичээлийн дундаас таслалт (1-7 цаг)</option>
+        <option value="board3" ${selectedDashDownload==='board3'?'selected':''}>3️⃣ Формгүй ирсэн хүүхдүүдийн самбар</option>
+      </select>
+      <button class="btn ${isDownloadDay ? 'btn-ok' : 'btn-p'}" onclick="handleWeeklyDashboardDownload()">
+        📥 Сонгосон самбар татах (${dayNames[dow]} гараг)
+      </button>
+    </div>
+
+    <!-- САМБАР 1: ХИЧЭЭЛ БҮТЭН ТАСЛАЛТ -->
+    <div class="dash-box">
+      <div class="title">
+        <span style="color:#e11d48">1️⃣ Хичээл бүтэн таслалт (7 хоног)</span>
+        <span style="font-size:11px;color:var(--mut)">Нийт: ${fullAbsentList.length} сурагч</span>
+      </div>
+      <p style="font-size:11px;color:var(--mut);margin-bottom:10px">Бүх ангийн сурагчдаас хамгийн олон удаа бүтэн өдрөөр тасалсан жагсаалт:</p>
+      ${board1Html}
+    </div>
+
+    <!-- САМБАР 2: ХИЧЭЭЛИЙН ДУНДААС ТАСЛАЛТ (1-7 ЦАГ) -->
+    <div class="dash-box">
+      <div class="title">
+        <span style="color:#7e22ce">2️⃣ Хичээлийн дундаас таслалт (1–7 цаг)</span>
+        <span style="font-size:11px;color:var(--mut)">Нийт: ${midSkipList.length} сурагч</span>
+      </div>
+      <p style="font-size:11px;color:var(--mut);margin-bottom:10px">Ангийн даргын 1–7 цагийн товчоор тэмдэглэсэн хичээлийн дундаас таслалт (7 хоногоор):</p>
+      ${board2Html}
+    </div>
+
+    <!-- САМБАР 3: ФОРМГҮЙ ИРСЭН ХҮҮХДҮҮД -->
+    <div class="dash-box">
+      <div class="title">
+        <span style="color:#0284c7">3️⃣ Формгүй ирсэн хүүхдүүд (7 хоног)</span>
+        <span style="font-size:11px;color:var(--mut)">Нийт: ${noUniformList.length} сурагч</span>
+      </div>
+      <p style="font-size:11px;color:var(--mut);margin-bottom:10px">Энэ 7 хоногт дүрэмт хувцасгүй ирсэн бүх ангийн сурагчдын жагсаалт:</p>
+      ${board3Html}
+    </div>
+
+    <!-- САМБАР 4: ХОЦРОЛТЫН САМБАР (24 ЦАГААР ТУСДАА) -->
+    <div class="dash-box" style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border-color:#fde68a">
+      <div class="title">
+        <span style="color:#b45309">4️⃣ Хоцролтын самбар (24 цагаар тусдаа)</span>
+        <span style="font-size:10px;background:#fff;padding:4px 8px;border-radius:9px;color:#d97706;font-weight:800">00:00 цагт устана</span>
+      </div>
+      <p style="font-size:11px;color:#92400e;margin-bottom:10px;line-height:1.45">
+        ⏱️ Энэхүү самбар нь <b>24 цаг</b> болоод шөнийн <b>00:00 цагт</b> датабаазаас автоматаар устаж, <b>00:01 минутаас</b> шинэ өдрийн датагаа авна. (${todayStr} өдрийн хоцролт: <b>${dailyLateList.length} сурагч</b>)
+      </p>
+      ${board4Html}
+      <button class="btn btn-sm btn-p" style="margin-top:10px;width:100%;background:#d97706" onclick="downloadDailyLateCSV()">
+        📥 Өнөөдрийн хоцролтын самбар татах (CSV)
+      </button>
+    </div>
+  `;
+}
+
+function handleWeeklyDashboardDownload() {
+  const selectEl = document.getElementById('dash_dl_select');
+  const boardType = selectEl ? selectEl.value : selectedDashDownload;
+  const dow = new Date().getDay(); // 5 = Баасан, 6 = Бямба, 0 = Ням
+
+  if (dow !== 5 && dow !== 6 && dow !== 0) {
+    return notify('⚠️ 7 хоногийн самбарыг зөвхөн Баасан (5 дахь), Хагас сайн, Бүтэн сайн өдрүүдэд татаж авах боломжтой!');
+  }
+  executeWeeklyDashboardCSV(boardType);
+}
+
+function executeWeeklyDashboardCSV(boardType) {
+  const { fullAbsentList, midSkipList, noUniformList, curMondayStr } = computeAllDashboardsData();
+  let csv = '\uFEFF';
+  csv += `Самбарын төрөл,Эрэмбэ,Сурагчийн нэр,Анги,Үзүүлэлт,7 хоног эхэлсэн огноо\n`;
+
+  if (boardType === 'all' || boardType === 'board1') {
+    fullAbsentList.forEach((x, idx) => {
+      csv += `"1. Хичээл бүтэн таслалт",${idx + 1},"${x.name}","${x.cls}","Таслалт ${x.count} удаа","${curMondayStr}"\n`;
+    });
+  }
+  if (boardType === 'all' || boardType === 'board2') {
+    midSkipList.forEach((x, idx) => {
+      csv += `"2. Хичээлийн дундаас таслалт (1-7 цаг)",${idx + 1},"${x.name}","${x.cls}","Таслалт ${x.hours} цаг (${x.times} удаа)","${curMondayStr}"\n`;
+    });
+  }
+  if (boardType === 'all' || boardType === 'board3') {
+    noUniformList.forEach((x, idx) => {
+      csv += `"3. Формгүй ирсэн хүүхдүүд",${idx + 1},"${x.name}","${x.cls}","Формгүй ${x.count} удаа","${curMondayStr}"\n`;
+    });
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Dashboard_7honog_${boardType}_${getTodayStr()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  notify('✅ Сонгосон самбарын мэдээлэл Excel (CSV) файлаар татагдлаа!');
+}
+
+function downloadDailyLateCSV() {
+  const { dailyLateList, todayStr } = computeAllDashboardsData();
+  let csv = '\uFEFFЭрэмбэ,Сурагчийн нэр,Анги,Хоцорсон минут,Огноо\n';
+  dailyLateList.forEach((x, idx) => {
+    csv += `${idx + 1},"${x.name}","${x.cls}","${x.lateMin} минут","${todayStr}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Hotsrolt_24tsag_${todayStr}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  notify('✅ Өнөөдрийн хоцролтын самбар татагдлаа!');
+}
+
+// =========================================================
+// 6. АРХИВ ХЭСЭГ
+// =========================================================
+function renderArchiveSection() {
+  const isTeacher = (curUser.role === 'teacher');
+  const isManager = (curUser.role === 'manager');
+  const clsList = getSortedClassList();
+
+  if (clsList.length === 0) {
+    return `
+      <div class="card">
+        <div class="title">📦 Архив хоосон байна</div>
+        <p style="font-size:12px;color:var(--mut)">Одоогоор бүртгэлтэй анги байхгүй байна. Менежер хаягаар орж анги нээнэ үү.</p>
+      </div>
+    `;
+  }
+
+  if (isTeacher) {
+    curArchiveClass = curUser.cls;
+  } else {
+    if (curArchiveClass !== 'Бүгд' && !db.classes[curArchiveClass]) {
+      curArchiveClass = 'Бүгд';
+    }
+  }
+
+  const targetClasses = (curArchiveClass === 'Бүгд') ? clsList : [curArchiveClass];
+
+  let selectorHtml = '';
+  if (!isTeacher) {
+    let optsHtml = `<option value="Бүгд" ${curArchiveClass==='Бүгд'?'selected':''}>🏫 Бүх анги нэгтгэж (${clsList.length} анги)</option>`;
+    optsHtml += clsList.map(c => `<option value="${c}" ${curArchiveClass===c?'selected':''}>📌 ${c} анги (${(db.classes[c].students||[]).length} сурагч)</option>`).join('');
+
+    selectorHtml = `
+      <div class="card">
+        <div class="title">📂 Архив татах анги сонгох</div>
+        <select onchange="curArchiveClass=this.value;render()" style="margin-bottom:0">
+          ${optsHtml}
+        </select>
+      </div>
+    `;
+  }
+
+  let classCardsHtml = targetClasses.map(cName => {
+    const cObj = db.classes[cName];
+    if (!cObj) return '';
+    const recDates = Object.keys(cObj.records || {}).sort().reverse();
+    let rowsHtml = '';
+
+    if (!cObj.students || cObj.students.length === 0) {
+      rowsHtml = `<p style="font-size:12px;color:var(--mut)">Сурагч бүртгэгдээгүй байна.</p>`;
+    } else {
+      let trs = cObj.students.map((st, idx) => {
+        const stStats = getStudentPersonalStats(cObj, idx);
+        return `
+          <tr>
+            <td>${idx + 1}. ${st.name}</td>
+            <td style="color:var(--ok);font-weight:700">${stStats.present}</td>
+            <td style="color:var(--err);font-weight:700">${stStats.absent}</td>
+            <td style="color:var(--purp);font-weight:700">${stStats.midSkipHours}ц</td>
+            <td style="color:var(--warn);font-weight:700">${stStats.sick}</td>
+            <td style="color:var(--sec);font-weight:700">${stStats.noUni}</td>
+            ${isTeacher ? `<td style="color:var(--pri);font-weight:700">${stStats.noHw}</td>` : ''}
+          </tr>
+        `;
+      }).join('');
+
+      rowsHtml = `
+        <div style="overflow-x:auto">
+          <table class="arch-tbl">
+            <thead>
+              <tr>
+                <th>Сурагчийн нэр</th>
+                <th>Ирсэн</th>
+                <th>Бүтэн тас</th>
+                <th>Дундаас тас</th>
+                <th>Өвч</th>
+                <th>Формгүй</th>
+                ${isTeacher ? '<th>Д/Г дутуу</th>' : ''}
+              </tr>
+            </thead>
+            <tbody>${trs}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="card">
+        <div class="title">
+          <span>📋 ${cName} ангийн нэгдсэн архив</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:11px;color:var(--mut)">Бүртгэсэн: ${recDates.length} өдөр</span>
+            ${isManager ? `<button class="btn btn-sm btn-err" onclick="askDeleteClassModal('${cName}')">🗑️ Устгах</button>` : ''}
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--mut);margin-bottom:8px">
+          Ээлж: <b>${cObj.shift || 'Өглөө'}</b> • Нийт сурагч: <b>${(cObj.students||[]).length}</b>
+        </div>
+        ${rowsHtml}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    ${selectorHtml}
+    <div class="card" style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border-color:#e0e7ff">
+      <div class="title" style="color:var(--pri-d)">📥 Архив файл татах (${curArchiveClass})</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-ok" onclick="downloadArchiveCSV('${curArchiveClass}')">📊 Excel (CSV) архив татах</button>
+      </div>
+    </div>
+    ${classCardsHtml}
+  `;
+}
+
+function downloadArchiveCSV(targetCls) {
+  const isTeacher = (curUser.role === 'teacher');
+  const clsList = (targetCls === 'Бүгд') ? getSortedClassList() : [targetCls];
+  if (clsList.length === 0) return notify('⚠️ Татах анги алга байна!');
+
+  let csv = '\uFEFF';
+  csv += 'Анги,Ээлж,Д/Д,Сурагчийн нэр,Ирсэн өдөр,Бүтэн тасалсан,Дундаас тасалсан (цаг),Чөлөөтэй,Өвчтэй,Формгүй' + (isTeacher ? ',Д/Г дутуу' : '') + ',Дэлгэрэнгүй түүх\n';
+
+  clsList.forEach(cName => {
+    const cObj = db.classes[cName];
+    if (!cObj || !cObj.students) return;
+    cObj.students.forEach((st, idx) => {
+      const s = getStudentPersonalStats(cObj, idx);
+      const histStr = s.history.map(h => `${h.date}: ${h.txt}`).join(' || ').replace(/"/g, '""');
+      const cleanName = st.name.replace(/"/g, '""');
+      csv += `"${cName}","${cObj.shift || 'Өглөө'}",${idx + 1},"${cleanName}",${s.present},${s.absent},${s.midSkipHours},${s.leave},${s.sick},${s.noUni}${isTeacher ? ',' + s.noHw : ''},"${histStr}"\n`;
+    });
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Arhiv_8surguuli_${targetCls}_${getTodayStr()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  notify(`✅ ${targetCls} ангийн Excel (CSV) архив татагдлаа!`);
+}
+
+// =========================================================
+// 7. ТАЙЛАН БА АНГИ СОНГОХ BUTTON ХЭСЭГ
+// =========================================================
+function svgDonut(pct, color) {
+  const r = 24, c = 2 * Math.PI * r;
+  const off = c - (pct / 100) * c;
+  return `
+    <svg width="68" height="68" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="6.5"/>
+      <circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="6.5"
+        stroke-dasharray="${c}" stroke-dashoffset="${off}" stroke-linecap="round" transform="rotate(-90 32 32)"/>
+      <text x="50%" y="54%" text-anchor="middle" font-size="12" font-weight="800" fill="#1e293b">${pct}%</text>
+    </svg>
+  `;
+}
+
+function renderSocialAnalytics() {
+  const isClassLocked = (curUser.role === 'teacher' || curUser.role === 'leader');
+  const showHw = (curUser.role === 'teacher' || curUser.role === 'leader');
+
+  const clsList = getSortedClassList();
+  if (clsList.length === 0) {
+    return `<div class="card"><div class="title">⚠️ Одоогоор анги үүсээгүй байна</div><p style="font-size:12px;color:var(--mut)">Менежер хаягаар орж ангийн багш эсвэл ангийн даргын хаяг нээнэ үү.</p></div>`;
+  }
+
+  if (isClassLocked) {
+    curClassFilter = curUser.cls;
+  } else if (!db.classes[curClassFilter]) {
+    curClassFilter = clsList[0];
+  }
+
+  const clsObj = db.classes[curClassFilter];
+  const sts = clsObj.students || [];
+  const total = sts.length || 1;
+  const subjs = (clsObj.schedule && clsObj.schedule[curDay]) ? clsObj.schedule[curDay] : [];
+
+  let presCount = 0, uniCount = 0, hwDone = 0;
+  const absList = [], midSkipTodayList = [], lateTodayList = [], leaveList = [], sickList = [], noUniList = [], noHwList = [];
+
+  sts.forEach((s, idx) => {
+    const rec = getDayRecord(clsObj, curDate, idx);
+    if (rec.skipHours && rec.skipHours > 0) {
+      midSkipTodayList.push({ s, idx, skipHours: rec.skipHours });
+    }
+    if (rec.lateMin && rec.lateMin > 0) {
+      lateTodayList.push({ s, idx, lateMin: rec.lateMin });
+    }
+
+    if (rec.status === 'present') {
+      presCount++;
+      if (rec.uniform) uniCount++;
+      else noUniList.push({ s, idx });
+
+      let missedAny = false;
+      subjs.forEach(sub => {
+        if (isHwDoneForDate(clsObj, curDate, idx, sub)) hwDone++;
+        else missedAny = true;
+      });
+      if (missedAny) noHwList.push({ s, idx });
+    } else if (rec.status === 'absent') absList.push({ s, idx });
+    else if (rec.status === 'leave') leaveList.push({ s, idx });
+    else if (rec.status === 'sick') sickList.push({ s, idx });
+  });
+
+  const presentTotal = presCount || 1;
+  const hwTotal = presCount * (subjs.length || 1);
+
+  const attPct = sts.length ? Math.round((presCount / total) * 100) : 0;
+  const uniPct = presCount ? Math.round((uniCount / presentTotal) * 100) : 0;
+  const hwPct = (presCount && subjs.length) ? Math.round((hwDone / hwTotal) * 100) : 0;
+
+  const mult = curPeriod === '7d' ? 1 : 4;
+  let bAbs = 0, bMidSkip = 0, bLeave = 0, bSick = 0, bNoUni = 0, bNoHw = 0;
+  sts.forEach((s, idx) => {
+    const stStats = getStudentPersonalStats(clsObj, idx);
+    bAbs += stStats.absent * mult;
+    bMidSkip += stStats.midSkipCnt * mult;
+    bLeave += stStats.leave * mult;
+    bSick += stStats.sick * mult;
+    bNoUni += stStats.noUni * mult;
+    bNoHw += stStats.noHw * mult;
+  });
+
+  const barItems = [
+    { lbl: 'Бүтэн тас', val: bAbs, col: '#f43f5e' },
+    { lbl: 'Дундаас тас', val: bMidSkip, col: '#ec4899' },
+    { lbl: 'Чөлөө', val: bLeave, col: '#a855f7' },
+    { lbl: 'Өвчтэй', val: bSick, col: '#f59e0b' },
+    ...(showHw ? [{ lbl: 'Д/Г дутуу', val: bNoHw, col: '#6366f1' }] : []),
+    { lbl: 'Формгүй', val: bNoUni, col: '#38bdf8' }
+  ];
+  const maxB = Math.max(...barItems.map(x => x.val), 5);
+
+  // Анги сонгох BUTTON GRID (9А, 9Б, 10А, 10Б гэх мэт бүтэн дардаг товчнууд)
+  let classButtonsHtml = clsList.map(c => {
+    const cnt = (db.classes[c].students || []).length;
+    return `
+      <button class="class-btn ${curClassFilter===c?'active':''}" onclick="curClassFilter='${c}';render()">
+        <span>${c}</span>
+        <span class="sub-cnt">${cnt} сурагч</span>
+      </button>
+    `;
+  }).join('');
+
+  let barsHtml = barItems.map(b => {
+    return `
+      <div class="b-col">
+        <div class="b-val">${b.val}</div>
+        <div class="b-fill" style="height:${Math.round((b.val/maxB)*90)}px;background:${b.col}"></div>
+        <div class="b-txt">${b.lbl}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    ${renderDateSearchBox('an_date_inp')}
+    ${!isClassLocked ? `
+      <div class="card">
+        <div class="title">
+          <span>🏫 Анги сонгох (Товч дээр дарна уу)</span>
+          <span style="font-size:11px;color:var(--pri-d);font-weight:800">Сонгосон: ${curClassFilter}</span>
+        </div>
+        <div class="class-btn-grid">${classButtonsHtml}</div>
+      </div>
+    ` : ''}
+
+    <div class="card">
+      <div class="title">🎯 ${curDate} График (${curClassFilter} анги)</div>
+      <div class="${showHw ? 'donuts-3' : 'donuts-2'}">
+        <div class="d-box"><div class="d-lbl">📊 ИРЦ</div>${svgDonut(attPct, '#10b981')}<div style="font-size:10px;font-weight:700;margin-top:4px">${presCount}/${sts.length} ирсэн</div></div>
+        <div class="d-box"><div class="d-lbl">👕 ФОРМ</div>${svgDonut(uniPct, '#38bdf8')}<div style="font-size:10px;font-weight:700;margin-top:4px">${uniCount}/${presCount} өмссөн</div></div>
+        ${showHw ? `<div class="d-box"><div class="d-lbl">📝 ДААЛГАВАР</div>${svgDonut(hwPct, '#6366f1')}<div style="font-size:10px;font-weight:700;margin-top:4px">${hwDone}/${hwTotal} хийсэн</div></div>` : ''}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">
+        <span>📊 Баганан Статик (${curClassFilter})</span>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sm ${curPeriod==='7d'?'btn-p':'btn-g'}" onclick="curPeriod='7d';render()">7 хоног</button>
+          <button class="btn btn-sm ${curPeriod==='1m'?'btn-p':'btn-g'}" onclick="curPeriod='1m';render()">1 сар</button>
+        </div>
+      </div>
+      <div class="bars">${barsHtml}</div>
+    </div>
+
+    <div class="card">
+      <div class="title">📋 ${curDate} өдрийн зөрчлийн жагсаалт (${curClassFilter})</div>
+      ${renderAlertGroup('❌ Хичээл бүтэн тасалсан', absList, '#f43f5e', clsObj)}
+      ${renderAlertGroup('🏃 Хичээлийн дундаас тасалсан (1-7 цаг)', midSkipTodayList, '#ec4899', clsObj)}
+      ${renderAlertGroup('⏱️ Хоцорсон сурагчид', lateTodayList, '#f59e0b', clsObj)}
+      ${renderAlertGroup('🏃 Чөлөөтэй сурагчид', leaveList, '#a855f7', clsObj)}
+      ${renderAlertGroup('🤒 Өвчтэй сурагчид', sickList, '#d97706', clsObj)}
+      ${renderAlertGroup('👕 Форм өмсөж ирээгүй', noUniList, '#38bdf8', clsObj)}
+      ${showHw ? renderAlertGroup('📝 Гэрийн даалгавар дутуу', noHwList, '#6366f1', clsObj, subjs) : ''}
+    </div>
+  `;
+}
+
+function renderAlertGroup(title, list, color, clsObj, subjs = null) {
+  let listHtml = '';
+  if (list.length === 0) {
+    listHtml = `<div style="font-size:11px;color:#059669;background:#ecfdf5;padding:8px 12px;border-radius:12px;font-weight:700">Зөрчилгүй ✅</div>`;
+  } else {
+    listHtml = list.map(item => {
+      let extra = '';
+      const rec = getDayRecord(clsObj, curDate, item.idx);
+      if (item.skipHours) {
+        extra += ` <span style="color:#e11d48;font-size:11px">(${item.skipHours} цаг тасалсан)</span>`;
+      }
+      if (item.lateMin) {
+        extra += ` <span style="color:#d97706;font-size:11px">(${item.lateMin} мин хоцорсон)</span>`;
+      }
+      if (subjs && subjs.length > 0 && rec.status === 'present') {
+        const missed = subjs.filter(sub => !isHwDoneForDate(clsObj, curDate, item.idx, sub));
+        if (missed.length > 0) extra += ` <span style="color:var(--err);font-size:11px">(Дутуу: ${missed.join(', ')})</span>`;
+      }
+      if ((rec.status === 'leave' || rec.status === 'sick') && rec.leaveReason) {
+        const reasonCol = rec.status === 'sick' ? 'var(--warn)' : 'var(--purp)';
+        extra += `<div style="color:${reasonCol};font-size:10px;margin-top:3px;">Шалтгаан: ${rec.leaveReason}</div>`;
+      }
+      return `<div style="padding:8px 12px;background:#f8fafc;border-left:3.5px solid ${color};border-radius:10px;font-size:12px;font-weight:700;margin-bottom:5px">${item.s.name}${extra}</div>`;
+    }).join('');
+  }
+  return `<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:800;color:${color};margin-bottom:5px">${title} (${list.length})</div>${listHtml}</div>`;
+}
+
+// =========================================================
+// 8. АНГИ УДИРДСАН БАГШ БА АНГИЙН ДАРГА
+// =========================================================
+function renderTeacher() {
+  if (!db.classes[curUser.cls]) {
+    db.classes[curUser.cls] = { shift: 'Өглөө', schedule: { 1:[], 2:[], 3:[], 4:[], 5:[] }, students: [], records: {} };
+  }
+  const cls = db.classes[curUser.cls];
+  return `
+    <div class="tabs">
+      <button class="tab ${curTab==='main'?'active':''}" onclick="curTab='main';render()">✅ Бүртгэл</button>
+      <button class="tab ${curTab==='sched'?'active':''}" onclick="curTab='sched';render()">📅 Хуваарь</button>
+      <button class="tab ${curTab==='stats'?'active':''}" onclick="curTab='stats';render()">📊 Тайлан</button>
+      <button class="tab ${curTab==='archive'?'active':''}" onclick="curTab='archive';render()">📦 Архив</button>
+    </div>
+    ${curTab === 'main' ? renderAttendanceBoard(cls) : ''}
+    ${curTab === 'sched' ? renderTeacherConfig(cls) : ''}
+    ${curTab === 'stats' ? renderSocialAnalytics() : ''}
+    ${curTab === 'archive' ? renderArchiveSection() : ''}
+  `;
+}
+
+function renderLeader() {
+  if (!db.classes[curUser.cls]) {
+    db.classes[curUser.cls] = { shift: 'Өглөө', schedule: { 1:[], 2:[], 3:[], 4:[], 5:[] }, students: [], records: {} };
+  }
+  const cls = db.classes[curUser.cls];
+  return `
+    <div class="tabs">
+      <button class="tab ${curTab==='main'?'active':''}" onclick="curTab='main';render()">✅ Ирц & Даалгавар</button>
+      <button class="tab ${curTab==='stats'?'active':''}" onclick="curTab='stats';render()">📊 Тайлан</button>
+    </div>
+    ${curTab === 'main' ? renderAttendanceBoard(cls) : renderSocialAnalytics()}
+  `;
+}
+
+function renderTeacherConfig(cls) {
+  const dayNames = { 1:'Даваа', 2:'Мягмар', 3:'Лхагва', 4:'Пүрэв', 5:'Баасан' };
+  if (!cls.schedule) cls.schedule = { 1:[], 2:[], 3:[], 4:[], 5:[] };
+
+  let scheduleInputsHtml = [1,2,3,4,5].map(d => {
+    let val = (cls.schedule[d]||[]).join(', ');
+    return `
+      <label style="font-size:11px;font-weight:800;color:var(--pri);display:block;margin-bottom:4px">${d} дахь өдөр (${dayNames[d]}):</label>
+      <input id="sch_${d}" value="${val}" placeholder="Жишээ: Математик, Монгол хэл...">
+    `;
+  }).join('');
+
+  return `
+    <div class="card">
+      <div class="title">👨‍🎓 ${curUser.cls} ангийн сурагч нэмэх (${(cls.students||[]).length})</div>
+      <textarea id="t_names" rows="3" placeholder="Сурагчдын нэрсийг шинэ мөрөөр эсвэл таслалаар зааглан бичнэ үү..."></textarea>
+      <button class="btn btn-ok" onclick="addClassStudents()">➕ Сурагчид нэмэх</button>
+    </div>
+
+    <div class="card">
+      <div class="title">☀️/🌙 Ээлж & Хуваарь оруулах</div>
+      <label style="font-size:11px;font-weight:700;color:var(--mut);display:block;margin-bottom:4px">Хичээллэх ээлж сонгох:</label>
+      <select id="t_shift" onchange="saveShift()">
+        <option value="Өглөө" ${cls.shift==='Өглөө'?'selected':''}>☀️ Өглөөний ээлж</option>
+        <option value="Орой" ${cls.shift==='Орой'?'selected':''}>🌙 Оройн ээлж</option>
+      </select>
+      <p style="font-size:11px;color:var(--mut);margin-bottom:10px">Өдөр бүрийн хичээлүүдийг таслалаар зааглаж бичнэ үү:</p>
+      ${scheduleInputsHtml}
+      <button class="btn btn-p" onclick="saveSchedule()">💾 Хичээлийн хуваарь хадгалах</button>
+    </div>
+  `;
+}
+
+function saveShift() {
+  db.classes[curUser.cls].shift = document.getElementById('t_shift').value;
+  saveDB(); notify('✅ Ээлж хадгалагдлаа!');
+}
+
+function saveSchedule() {
+  const cls = db.classes[curUser.cls];
+  if (!cls.schedule) cls.schedule = {};
+  [1,2,3,4,5].forEach(d => {
+    const val = document.getElementById('sch_' + d).value;
+    cls.schedule[d] = val.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+  });
+  saveDB();
+  notify('✅ 1-5 дахь өдрийн хичээлийн хуваарь хадгалагдлаа!');
+  render();
+}
+
+function addClassStudents() {
+  const raw = document.getElementById('t_names').value.trim();
+  if (!raw) return notify('⚠️ Сурагчдын нэрсийг оруулна уу!');
+  const names = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+  const cls = db.classes[curUser.cls];
+  if (!Array.isArray(cls.students)) cls.students = [];
+  names.forEach(n => cls.students.push({ name: n }));
+  saveDB();
+  notify(`✅ ${names.length} сурагч нэмэгдлээ!`);
+  render();
+}
+
+function renderAttendanceBoard(cls) {
+  const dayNames = { 1:'Даваа', 2:'Мягмар', 3:'Лхагва', 4:'Пүрэв', 5:'Баасан' };
+  if (!cls.schedule) cls.schedule = { 1:[], 2:[], 3:[], 4:[], 5:[] };
+  const subjs = cls.schedule[curDay] || [];
+
+  const stMap = {
+    present: { lbl: '✅ Ирсэн', cls: 'c-pres' },
+    absent: { lbl: '❌ Тасалсан', cls: 'c-abs' },
+    sick: { lbl: '🤒 Өвчтэй', cls: 'c-sick' },
+    leave: { lbl: '🏃 Чөлөөтэй', cls: 'c-leav' }
+  };
+
+  let dayTabsHtml = [1,2,3,4,5].map(d => {
+    return `<button class="tab ${curDay===d?'active':''}" onclick="curDay=${d};render()">${dayNames[d]}</button>`;
+  }).join('');
+
+  const isLocked = parseDateStr(curDate) < parseDateStr(getTodayStr());
+
+  let studentsHtml = '';
+  if (!cls.students || cls.students.length === 0) {
+    studentsHtml = `
+      <div class="card">
+        <div class="title">👨‍🎓 Сурагчийн жагсаалт хоосон байна</div>
+        <p style="font-size:12px;color:var(--mut);line-height:1.5">Анги удирдсан багш "📅 Хуваарь" цэсээр орж сурагчдын нэрс болон хичээлийн хуваарийг оруулна уу.</p>
+      </div>
+    `;
+  } else {
+    let studentRows = cls.students.map((s, idx) => {
+      const rec = getDayRecord(cls, curDate, idx);
+      const isPresent = (rec.status === 'present');
+      const stInfo = stMap[rec.status] || stMap.present;
+      const doneCnt = isPresent ? subjs.filter(sub => isHwDoneForDate(cls, curDate, idx, sub)).length : 0;
+      const allDone = isPresent && (doneCnt === subjs.length);
+      const initials = s.name.trim().slice(0, 2).toUpperCase();
+
+      let actionChips = '';
+      if (isPresent) {
+        actionChips = `
+          <div class="chip ${rec.uniform ? 'c-uni-y' : 'c-uni-n'}" onclick="toggleUni(${idx})">
+            ${rec.uniform ? '👕 Формтой' : '❌ Формгүй'}
+          </div>
+          <div class="chip ${allDone ? 'c-hw-y' : 'c-hw-n'}" onclick="openHwModal(${idx})">
+            📝 Д/Г: ${doneCnt}/${subjs.length}
+          </div>
+        `;
+      } else {
+        actionChips = `
+          <div class="chip c-zero" onclick="notify('⚠️ Ирээгүй сурагчийн форм 0 байна!')">👕 Форм: 0</div>
+          <div class="chip c-zero" onclick="notify('⚠️ Ирээгүй сурагчийн даалгавар 0 байна!')">📝 Д/Г: 0</div>
+        `;
+      }
+
+      let extraTags = '';
+      if (rec.lateMin > 0 || rec.skipHours > 0) {
+        extraTags = `<div class="extra-badges">`;
+        if (rec.lateMin > 0) {
+          extraTags += `<span class="mini-tag" style="background:#fef3c7;color:#d97706">⏱️ Хоцролт: ${rec.lateMin} мин</span>`;
+        }
+        if (rec.skipHours > 0) {
+          extraTags += `<span class="mini-tag" style="background:#ffe4e6;color:#e11d48">🏃 Дундаас тасалсан: ${rec.skipHours} цаг</span>`;
+        }
+        extraTags += `</div>`;
+      }
+
+      let leaveInput = '';
+      if (rec.status === 'leave' || rec.status === 'sick') {
+        const isSick = rec.status === 'sick';
+        const brColor = isSick ? '#fbbf24' : '#c084fc';
+        const bgCol = isSick ? '#fffbeb' : '#faf5ff';
+        const plc = isSick ? '🤒 Өвчний шалтгаан бичих (макс 40 үсэг)...' : '🏃 Чөлөөний шалтгаан бичих (макс 40 үсэг)...';
+        leaveInput = `<input type="text" maxlength="40" placeholder="${plc}" value="${rec.leaveReason || ''}" oninput="updateLeaveReason(${idx}, this.value)" style="width:100%; padding:10px 14px; border-radius:14px; border:1.5px dashed ${brColor}; background:${bgCol}; font-size:11px; margin-top:10px; margin-bottom:0; outline:none; font-weight:700; color:var(--txt);" ${isLocked ? 'disabled' : ''}>`;
+      }
+
+      // Ангийн дарга бол зөвхөн Таслалт (1-7 цаг) ба Хоцролт (1-80 мин) цэс нээнэ
+      const dotAction = (curUser.role === 'leader')
+        ? `openLeaderTaslaltModal(${idx})`
+        : `openStudentStatsModal(${idx})`;
+
+      return `
+        <div class="st-card">
+          <div class="st-top">
+            <div class="st-name-wrap">
+              <div class="avatar">${initials}</div>
+              <span>${idx + 1}. ${s.name}</span>
+            </div>
+            <div class="st-right">
+              <span class="status-mini">
+                ${!isPresent ? 'Хоосон (0) ⚪' : (allDone ? 'Д/Г Бүрэн ✅' : 'Д/Г Дутуу ⚠️')}
+              </span>
+              <button class="dots-btn" title="Таслалт ба Хоцролт" onclick="${dotAction}">⋮</button>
+            </div>
+          </div>
+          <div class="chips">
+            <div class="chip ${stInfo.cls}" onclick="cycleStatus(${idx})">${stInfo.lbl}</div>
+            ${actionChips}
+          </div>
+          ${extraTags}
+          ${leaveInput}
+        </div>
+      `;
+    }).join('');
+
+    studentsHtml = `
+      <div>${studentRows}</div>
+      ${isLocked ? 
+        `<div style="text-align:center; padding:14px; background:#fff1f2; color:#e11d48; border-radius:16px; font-size:12px; font-weight:800; margin-top:8px; border:1px solid #fecdd3;">🔒 Өнгөрсөн өдрийн мэдээллийг өөрчлөх боломжгүй (Зөвхөн харах).</div>` 
+        : 
+        `<button class="btn btn-p" onclick="saveDB();notify('✅ ${curDate} өдрийн бүртгэл үүлэн санах ойд хадгалагдлаа!')">💾 ${curDate} Бүртгэл хадгалах</button>`
+      }
+    `;
+  }
+
+  return `
+    ${renderDateSearchBox('att_date_inp')}
+    <div class="card">
+      <div class="title"><span>📅 Гараг сонгох (${cls.shift || 'Өглөө'} ээлж)</span></div>
+      <div class="tabs">${dayTabsHtml}</div>
+      <div style="font-size:11px;color:var(--mut);margin-top:10px;font-weight:700">
+        📚 Хичээлүүд: <span style="color:var(--pri)">${subjs.length ? subjs.join(', ') : 'Хуваарь оруулаагүй байна'}</span>
+      </div>
+    </div>
+    ${studentsHtml}
+  `;
+}
+
+// =========================================================
+// 9. АНГИЙН ДАРГЫН 3 ЦЭГ (`⋮`) — ЗӨВХӨН ТАСЛАЛТ (1-7 ЦАГ BUTTON) БА ХОЦРОЛТ (1-80 МИН)
+// =========================================================
+let tempSkipHours = 0;
+
+function openLeaderTaslaltModal(idx) {
+  if (isEditLocked()) return;
+  const cls = db.classes[curUser.cls];
+  const st = cls.students[idx];
+  const rec = getDayRecord(cls, curDate, idx);
+  tempSkipHours = rec.skipHours || 0;
+
+  // 1-ээс 80 минут хүртэлх бүх сонголтыг үүсгэх
+  let lateOptionsHtml = `<option value="0" ${rec.lateMin === 0 ? 'selected' : ''}>✅ Хоцроогүй (0 минут)</option>`;
+  for (let m = 1; m <= 80; m++) {
+    lateOptionsHtml += `<option value="${m}" ${rec.lateMin === m ? 'selected' : ''}>⏱️ ${m} минут хоцорсон</option>`;
+  }
+
+  // 1-7 цаг таслалтын дардаг Button-ууд
+  let hourButtonsHtml = `
+    <button type="button" id="hbtn_0" class="hour-btn ${tempSkipHours === 0 ? 'active-zero' : ''}" onclick="selectSkipHourBtn(0)">
+      0 цаг<br><span style="font-size:9px;font-weight:700">Таслаагүй</span>
+    </button>
+  `;
+  for (let h = 1; h <= 7; h++) {
+    hourButtonsHtml += `
+      <button type="button" id="hbtn_${h}" class="hour-btn ${tempSkipHours === h ? 'active-abs' : ''}" onclick="selectSkipHourBtn(${h})">
+        ${h} цаг<br><span style="font-size:9px;font-weight:700">тасалсан</span>
+      </button>
+    `;
+  }
+
+  openModal(`
+    <div class="title">
+      <span>📌 Таслалт & Хоцролт — ${st.name}</span>
+      <button class="btn btn-sm btn-g" onclick="closeModal()">✕</button>
+    </div>
+
+    <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:18px;padding:14px;margin-bottom:14px">
+      <label style="font-size:12px;font-weight:800;color:#b45309;display:block;margin-bottom:8px">
+        ⏱️ 1. Хоцролт бүртгэх (1 – 80 минут):
+      </label>
+      <select id="ldr_late_select" style="margin-bottom:0;background:#fff;border-color:#fcd34d">
+        ${lateOptionsHtml}
+      </select>
+    </div>
+
+    <div style="background:#fff1f2;border:1.5px solid #fecdd3;border-radius:18px;padding:14px;margin-bottom:14px">
+      <label style="font-size:12px;font-weight:800;color:#be123c;display:block;margin-bottom:8px">
+        🏃 2. Хичээлийн дундаас таслалт (1 – 7 цаг дарж сонгох):
+      </label>
+      <div class="hour-btn-grid">
+        ${hourButtonsHtml}
+      </div>
+      <div style="font-size:10px;color:#e11d48;font-weight:700;text-align:center">
+        Дээрх 1–7 цагийн товчноос дарж хичээлийн дундаас тасалсан цагийг тэмдэглэнэ.
+      </div>
+    </div>
+
+    <button class="btn btn-p" onclick="saveLeaderTaslaltModal(${idx})">💾 Бүртгэл хадгалах</button>
+  `);
+}
+
+function selectSkipHourBtn(h) {
+  tempSkipHours = h;
+  for (let i = 0; i <= 7; i++) {
+    const btn = document.getElementById('hbtn_' + i);
+    if (!btn) continue;
+    btn.className = 'hour-btn';
+    if (i === h) {
+      btn.classList.add(h === 0 ? 'active-zero' : 'active-abs');
+    }
+  }
+}
+
+function saveLeaderTaslaltModal(idx) {
+  if (isEditLocked()) return;
+  const cls = db.classes[curUser.cls];
+  const rec = getDayRecord(cls, curDate, idx);
+
+  const lateVal = parseInt(document.getElementById('ldr_late_select').value, 10) || 0;
+  rec.lateMin = Math.min(80, Math.max(0, lateVal));
+  rec.skipHours = tempSkipHours;
+
+  saveDB();
+  closeModal();
+  notify(`✅ Хадгалагдлаа! (Хоцролт: ${rec.lateMin} мин, Дундаас таслалт: ${rec.skipHours} цаг)`);
+  render();
+}
+
+// Багш нар `⋮` дарахад хувийн статистик + ангийн даргын цэс рүү орох товч харагдана
+function openStudentStatsModal(idx) {
+  const cls = db.classes[curUser.cls];
+  const st = cls.students[idx];
+  const pStats = getStudentPersonalStats(cls, idx);
+
+  let histHtml = pStats.history.length === 0
+    ? `<div style="font-size:11px;color:var(--mut);padding:10px 0">Одоогоор түүх бүртгэгдээгүй байна.</div>`
+    : pStats.history.map(h => `
+        <div style="padding:9px 12px;background:#f8fafc;border-radius:12px;font-size:11px;font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;gap:8px">
+          <span style="color:var(--pri);white-space:nowrap">${h.date}</span>
+          <span style="text-align:right">${h.txt}</span>
+        </div>
+      `).join('');
+
+  openModal(`
+    <div class="title">
+      <span>👤 ${st.name} (${curUser.cls})</span>
+      <button class="btn btn-sm btn-g" onclick="closeModal()">✕</button>
+    </div>
+    <button class="btn btn-sm btn-p" style="width:100%;margin-bottom:12px" onclick="openLeaderTaslaltModal(${idx})">
+      ⏱️ Хоцролт (1-80м) & Дундаас таслалт (1-7ц) тэмдэглэх
+    </button>
+    <div class="stat-grid">
+      <div class="stat-pill" style="border-left:4px solid var(--err)"><div class="num" style="color:var(--err)">${pStats.absent}</div><div class="lbl">❌ Бүтэн тасалсан</div></div>
+      <div class="stat-pill" style="border-left:4px solid var(--purp)"><div class="num" style="color:var(--purp)">${pStats.midSkipHours}ц</div><div class="lbl">🏃 Дундаас тасалсан</div></div>
+      <div class="stat-pill" style="border-left:4px solid var(--warn)"><div class="num" style="color:var(--warn)">${pStats.sick}</div><div class="lbl">🤒 Өвчтэй</div></div>
+      <div class="stat-pill" style="border-left:4px solid var(--sec)"><div class="num" style="color:var(--sec)">${pStats.noUni}</div><div class="lbl">👕 Формгүй</div></div>
+    </div>
+    <div class="u-row" style="border-left-color:var(--pri);margin-bottom:14px">
+      <span>📝 Гэрийн даалгавар дутуу хийсэн:</span>
+      <b style="color:var(--pri)">${pStats.noHw} удаа</b>
+    </div>
+    <div style="font-size:12px;font-weight:800;margin-bottom:8px">📅 Бүртгэгдсэн өдрүүдийн түүх:</div>
+    ${histHtml}
+    <button class="btn btn-g" style="margin-top:12px" onclick="closeModal()">Хаах</button>
+  `);
+}
+
+function cycleStatus(idx) {
+  if (isEditLocked()) return;
+  const order = ['present', 'absent', 'sick', 'leave'];
+  const cls = db.classes[curUser.cls];
+  const rec = getDayRecord(cls, curDate, idx);
+  const nextStatus = order[(order.indexOf(rec.status) + 1) % order.length];
+  rec.status = nextStatus;
+
+  if (nextStatus !== 'present') {
+    rec.uniform = false;
+    rec.hw = {};
+    (cls.schedule[curDay] || []).forEach(sub => { rec.hw[sub] = false; });
+  } else {
+    rec.uniform = true;
+    rec.hw = {};
+    (cls.schedule[curDay] || []).forEach(sub => { rec.hw[sub] = true; });
+  }
+  saveDB(); render();
+}
+
+function toggleUni(idx) {
+  if (isEditLocked()) return;
+  const cls = db.classes[curUser.cls];
+  const rec = getDayRecord(cls, curDate, idx);
+  if (rec.status !== 'present') return;
+  rec.uniform = !rec.uniform;
+  saveDB(); render();
+}
+
+function openHwModal(idx) {
+  const cls = db.classes[curUser.cls];
+  const st = cls.students[idx];
+  const rec = getDayRecord(cls, curDate, idx);
+  if (rec.status !== 'present') return notify('⚠️ Ирээгүй сурагчийн даалгавар 0 (хоосон) байна!');
+
+  const subjs = (cls.schedule && cls.schedule[curDay]) ? cls.schedule[curDay] : [];
+  if (subjs.length === 0) return notify('⚠️ Багш энэ өдрийн хичээлийн хуваарийг оруулаагүй байна!');
+
+  const isLocked = parseDateStr(curDate) < parseDateStr(getTodayStr());
+
+  let subjsHtml = subjs.map(sub => {
+    const done = isHwDoneForDate(cls, curDate, idx, sub);
+    let btnsHtml = isLocked
+      ? `<span style="font-size:11px;font-weight:700;color:${done ? 'var(--ok)' : 'var(--err)'}">${done ? 'Хийсэн ✓' : 'Хийгээгүй ✗'}</span>`
+      : `<button class="btn btn-sm ${done ? 'btn-ok' : 'btn-g'}" onclick="setHw(${idx},'${sub}',true)">Хийсэн ✓</button>
+         <button class="btn btn-sm ${!done ? 'btn-err' : 'btn-g'}" onclick="setHw(${idx},'${sub}',false)">Хийгээгүй ✗</button>`;
+
+    return `
+      <div class="u-row" style="border-left-color:${done ? 'var(--ok)' : 'var(--err)'}">
+        <span style="font-weight:800;font-size:13px">${sub}</span>
+        <div style="display:flex;gap:6px;align-items:center;">${btnsHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  openModal(`
+    <div class="title">
+      <span>📝 ${st.name} (${curDate})</span>
+      <button class="btn btn-sm btn-g" onclick="closeModal()">✕</button>
+    </div>
+    ${subjsHtml}
+    <button class="btn btn-p" style="margin-top:10px" onclick="closeModal()">✅ Болсон</button>
+  `);
+}
+
+function setHw(idx, sub, val) {
+  if (isEditLocked()) return;
+  const cls = db.classes[curUser.cls];
+  const rec = getDayRecord(cls, curDate, idx);
+  if (!rec.hw) rec.hw = {};
+  rec.hw[sub] = val;
+  saveDB(); openHwModal(idx); render();
+}
+
+render();
+initFirebaseCloud();
+</script>
+</body>
+</html>
